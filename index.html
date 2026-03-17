@@ -8,6 +8,26 @@
 </head>
 <body>
 
+<div class="panel header-panel">
+    <div class="char-image-box">
+        <img id="char-img-display" src="https://via.placeholder.com/150?text=Retrato" alt="Personaje">
+        <input type="text" id="char-img-url" placeholder="Pega la URL de tu imagen aquí..." onchange="actualizarImagen()">
+    </div>
+    <div class="char-details">
+        <div class="detail-row">
+            <input type="text" id="char-nombre" class="char-name" placeholder="Nombre del Personaje">
+        </div>
+        <div class="detail-row info-row">
+            <input type="text" id="char-sexo" placeholder="Sexo/Género">
+            <input type="number" id="char-edad" placeholder="Edad">
+            <input type="text" id="char-clase" placeholder="Clase / Profesión">
+        </div>
+        <div class="detail-row">
+            <textarea id="char-historia" placeholder="Escribe aquí la historia de fondo..."></textarea>
+        </div>
+    </div>
+</div>
+
 <div class="grid-container">
     
     <div class="panel">
@@ -35,7 +55,20 @@
             </thead>
             <tbody id="tabla-stats"></tbody>
         </table>
-        <p style="font-size: 11px; color: #7f8c8d; margin-top: 5px;">* Los números en <span style="color: #2980b9; font-weight: bold;">azul</span> representan bonus por equipamiento.</p>
+        <p style="font-size: 11px; color: #7f8c8d; margin-top: 5px;">* Modificadores: <span style="color: #2980b9; font-weight: bold;">Equipo</span> | <span style="color: #8e44ad; font-weight: bold;">Efectos</span></p>
+
+        <h3 style="margin-top: 20px;">Efectos Activos (Maldiciones/Buffs)</h3>
+        <ul class="inventory-list" id="lista-efectos">
+            <li>
+                <input type="text" id="efecto-nombre" placeholder="Ej: Maldición del Bosque" style="width: 50%;">
+                <select id="efecto-stat" style="width: 25%;">
+                    <option value="velocidad">Velocidad</option>
+                    <option value="ataque">Ataque</option>
+                    <option value="defensa">Defensa</option>
+                </select>
+                <input type="number" id="efecto-valor" placeholder="-1" style="width: 20%; text-align: center;" onchange="actualizarEquipamiento()">
+            </li>
+        </ul>
     </div>
 
     <div class="panel">
@@ -99,7 +132,6 @@
             </ul>
         </div>
     </div>
-
 </div>
 
 <script src="app.js"></script>
