@@ -3,59 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Panel de Personaje D&D</title>
-    <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #eef2f5; padding: 20px; color: #333; }
-        .grid-container { display: grid; grid-template-columns: 1.2fr 1fr; gap: 20px; max-width: 1100px; margin: auto; }
-        .panel { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        h2, h3 { margin-top: 0; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 5px; }
-        
-        /* Controles Superiores */
-        .controls-box { display: flex; justify-content: space-between; align-items: center; background: #ecf0f1; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
-        .level-badge { background: #f39c12; color: white; padding: 8px 15px; border-radius: 20px; font-weight: bold; font-size: 16px; }
-        
-        table { width: 100%; border-collapse: collapse; text-align: center; }
-        th, td { border: 1px solid #ddd; padding: 10px 5px; }
-        th { background-color: #34495e; color: white; font-size: 13px; }
-        
-        .btn { padding: 6px 12px; cursor: pointer; border: none; border-radius: 4px; color: white; font-weight: bold; transition: 0.2s; }
-        .btn:disabled { background-color: #bdc3c7; cursor: not-allowed; }
-        .btn-small { padding: 2px 8px; font-size: 16px; margin: 0 2px; }
-        
-        /* Colores de Botones */
-        .btn-blue { background-color: #3498db; } .btn-blue:hover:not(:disabled) { background-color: #2980b9; }
-        .btn-green { background-color: #2ecc71; } .btn-green:hover:not(:disabled) { background-color: #27ae60; }
-        .btn-red { background-color: #e74c3c; } .btn-red:hover:not(:disabled) { background-color: #c0392b; }
-
-        /* Estilos de Barras Animadas (Vida/Maná) */
-        .status-box { display: flex; justify-content: space-between; gap: 15px; margin-bottom: 20px; }
-        .status-item { background: #ecf0f1; padding: 15px; border-radius: 8px; flex-grow: 1; text-align: center; }
-        
-        .status-header { display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 8px; font-size: 15px; }
-        .hp-text { color: #27ae60; }
-        .hp-text.low { color: #c0392b; }
-        .mana-text { color: #2980b9; }
-
-        .bar-bg { width: 100%; height: 22px; background-color: #bdc3c7; border-radius: 10px; overflow: hidden; border: 2px solid #7f8c8d; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2); }
-        .bar-fill { height: 100%; transition: width 0.5s ease-in-out, background-color 0.5s ease-in-out; }
-        .hp-fill { background-color: #2ecc71; }
-        .hp-fill.low { background-color: #e74c3c; }
-        .mana-fill { background-color: #3498db; }
-
-        /* Controles de Daño/Cura */
-        .mod-controls { display: flex; justify-content: center; gap: 5px; margin-top: 10px; align-items: center; }
-        .mod-controls input { width: 50px; text-align: center; font-size: 16px; font-weight: bold; border: 1px solid #bdc3c7; border-radius: 4px; padding: 4px; }
-
-        /* Inventario */
-        .inventory-section { margin-bottom: 15px; }
-        .inventory-list { list-style: none; padding: 0; margin: 0; }
-        .inventory-list li { margin-bottom: 6px; display: flex; align-items: center; }
-        .inventory-list label { width: 45px; font-weight: bold; color: #7f8c8d; font-size: 13px; }
-        .inventory-list input { flex-grow: 1; padding: 8px; border: 1px solid #bdc3c7; border-radius: 4px; font-family: inherit; }
-        
-        .hidden { display: none !important; }
-        .text-green { color: #27ae60; font-weight: bold; }
-        .text-muted { color: #7f8c8d; font-size: 12px; font-weight: bold; }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
@@ -90,6 +38,7 @@
             <tbody id="tabla-stats">
                 </tbody>
         </table>
+        <p style="font-size: 11px; color: #7f8c8d; margin-top: 5px;">* Los números en <span style="color: #2980b9; font-weight: bold;">azul</span> representan bonus por equipamiento.</p>
     </div>
 
     <div class="panel">
@@ -97,28 +46,17 @@
         
         <div class="status-box">
             <div class="status-item">
-                <div class="status-header">
-                    <span>VIDA</span>
-                    <span id="hp-text-display" class="hp-text">20 / 20</span>
-                </div>
-                <div class="bar-bg">
-                    <div id="hp-bar" class="bar-fill hp-fill" style="width: 100%;"></div>
-                </div>
+                <div class="status-header"><span>VIDA</span><span id="hp-text-display" class="hp-text">20 / 20</span></div>
+                <div class="bar-bg"><div id="hp-bar" class="bar-fill hp-fill" style="width: 100%;"></div></div>
                 <div class="mod-controls">
                     <button class="btn btn-small btn-red" onclick="modificarBarra('hp', -1)">- Daño</button>
                     <input type="number" id="hp-input" value="1" min="1">
                     <button class="btn btn-small btn-green" onclick="modificarBarra('hp', 1)">+ Curar</button>
                 </div>
             </div>
-
             <div class="status-item">
-                <div class="status-header">
-                    <span>MANÁ</span>
-                    <span id="mana-text-display" class="mana-text">20 / 20</span>
-                </div>
-                <div class="bar-bg">
-                    <div id="mana-bar" class="bar-fill mana-fill" style="width: 100%;"></div>
-                </div>
+                <div class="status-header"><span>MANÁ</span><span id="mana-text-display" class="mana-text">20 / 20</span></div>
+                <div class="bar-bg"><div id="mana-bar" class="bar-fill mana-fill" style="width: 100%;"></div></div>
                 <div class="mod-controls">
                     <button class="btn btn-small btn-red" onclick="modificarBarra('mana', -1)">- Gastar</button>
                     <input type="number" id="mana-input" value="1" min="1">
@@ -132,15 +70,30 @@
         <div class="inventory-section">
             <h4 style="margin: 0 0 5px 0; font-size: 14px;">Defensa (1)</h4>
             <ul class="inventory-list">
-                <li><label>Pecho</label><input type="text" placeholder="Armadura..."></li>
+                <li>
+                    <label>Pecho</label>
+                    <select id="eq-armadura" onchange="actualizarEquipamiento()">
+                        <option value="">-- Sin armadura --</option>
+                    </select>
+                </li>
             </ul>
         </div>
 
         <div class="inventory-section">
             <h4 style="margin: 0 0 5px 0; font-size: 14px;">Manos (2)</h4>
             <ul class="inventory-list">
-                <li><label>Mano 1</label><input type="text" placeholder="Arma principal / Escudo..."></li>
-                <li><label>Mano 2</label><input type="text" placeholder="Arma secundaria / Escudo..."></li>
+                <li>
+                    <label>Mano 1</label>
+                    <select id="eq-mano1" onchange="actualizarEquipamiento()">
+                        <option value="">-- Mano vacía --</option>
+                    </select>
+                </li>
+                <li>
+                    <label>Mano 2</label>
+                    <select id="eq-mano2" onchange="actualizarEquipamiento()">
+                        <option value="">-- Mano vacía --</option>
+                    </select>
+                </li>
             </ul>
         </div>
 
@@ -154,227 +107,10 @@
                 <li><label>Slot 5</label><input type="text"></li>
             </ul>
         </div>
-
-        <div class="inventory-section">
-            <h4 style="margin: 0 0 5px 0; font-size: 14px;">Magia / Hechizos (7)</h4>
-            <ul class="inventory-list">
-                <li><label>Hech. 1</label><input type="text"></li>
-                <li><label>Hech. 2</label><input type="text"></li>
-                <li><label>Hech. 3</label><input type="text"></li>
-                <li><label>Hech. 4</label><input type="text"></li>
-                <li><label>Hech. 5</label><input type="text"></li>
-                <li><label>Hech. 6</label><input type="text"></li>
-                <li><label>Hech. 7</label><input type="text"></li>
-            </ul>
-        </div>
     </div>
 
 </div>
 
-<script>
-    let modoJuego = false;
-    let puntosInicialesDisp = 15;
-    let nivelPersonaje = 1;
-    let puntosMejoraDisp = 0;
-
-    // Variables de Estado (Vida/Maná)
-    let hpActual = 20;
-    let hpMax = 20;
-    let manaActual = 20;
-    let manaMax = 20;
-
-    const stats = [
-        { id: 'vitalidad', nombre: 'VITALIDAD', base: 20, ptsIniciales: 0, mult: 5, ptsMejora: 0 },
-        { id: 'velocidad', nombre: 'VELOCIDAD', base: 1, ptsIniciales: 0, mult: 1, ptsMejora: 0 },
-        { id: 'ataque', nombre: 'ATAQUE', base: 1, ptsIniciales: 0, mult: 1, ptsMejora: 0 },
-        { id: 'defensa', nombre: 'DEFENSA', base: 1, ptsIniciales: 0, mult: 1, ptsMejora: 0 },
-        { id: 'ataque_magico', nombre: 'ATAQ. MÁG.', base: 1, ptsIniciales: 0, mult: 1, ptsMejora: 0 },
-        { id: 'defensa_magica', nombre: 'DEF. MÁG.', base: 1, ptsIniciales: 0, mult: 1, ptsMejora: 0 },
-        { id: 'inteligencia', nombre: 'INTELIGENCIA', base: 1, ptsIniciales: 0, mult: 1, ptsMejora: 0 },
-        { id: 'destreza', nombre: 'DESTREZA', base: 1, ptsIniciales: 0, mult: 1, ptsMejora: 0 }
-    ];
-
-    function calcularNivelFinal(stat) {
-        if (stat.id === 'vitalidad') {
-            return stat.base + ((nivelPersonaje - 1) * stat.mult);
-        }
-        return (stat.base + stat.ptsIniciales) + (stat.mult * stat.ptsMejora);
-    }
-
-    function recalcularMultiplicadores() {
-        stats.forEach(stat => {
-            if (stat.id !== 'vitalidad') {
-                let nivelBaseYAsignado = stat.base + stat.ptsIniciales;
-                if (nivelBaseYAsignado <= 2) stat.mult = 1;
-                else if (nivelBaseYAsignado === 3) stat.mult = 2;
-                else if (nivelBaseYAsignado <= 5) stat.mult = 3;
-                else stat.mult = 4;
-            }
-        });
-    }
-
-    function renderizarTabla() {
-        const tbody = document.getElementById('tabla-stats');
-        tbody.innerHTML = '';
-
-        if (!modoJuego) recalcularMultiplicadores();
-
-        stats.forEach((stat, index) => {
-            const nivelFinal = calcularNivelFinal(stat);
-            let columnaInteractiva = '';
-            
-            if (stat.id === 'vitalidad') {
-                columnaInteractiva = `<td><span class="text-muted">Automático por Nivel</span></td>`;
-            } else {
-                if (!modoJuego) {
-                    columnaInteractiva = `
-                        <td>
-                            <button class="btn btn-blue btn-small" onclick="modificarPuntoInicial(${index}, -1)">-</button>
-                            <span style="display:inline-block; width:20px; font-weight:bold;">${stat.ptsIniciales}</span>
-                            <button class="btn btn-blue btn-small" onclick="modificarPuntoInicial(${index}, 1)" ${puntosInicialesDisp === 0 ? 'disabled' : ''}>+</button>
-                        </td>`;
-                } else {
-                    columnaInteractiva = `
-                        <td>
-                            <button class="btn btn-green btn-small" onclick="gastarPuntoMejora(${index})" ${puntosMejoraDisp === 0 ? 'disabled' : ''}>+ Mejorar</button>
-                            <span style="font-size: 12px; color: #7f8c8d; display: block; margin-top: 3px;">Gastados: ${stat.ptsMejora}</span>
-                        </td>`;
-                }
-            }
-
-            tbody.innerHTML += `
-                <tr>
-                    <td><strong>${stat.nombre}</strong></td>
-                    <td style="font-size: 18px; font-weight: bold;">${nivelFinal}</td>
-                    ${columnaInteractiva}
-                    <td style="color: #8e44ad; font-weight: bold;">+${stat.mult}</td>
-                </tr>
-            `;
-        });
-
-        document.getElementById('puntos-iniciales').innerText = puntosInicialesDisp;
-        document.getElementById('btn-comenzar').disabled = puntosInicialesDisp > 0;
-        document.getElementById('nivel-general').innerText = nivelPersonaje;
-        document.getElementById('puntos-mejora').innerText = puntosMejoraDisp;
-
-        // Actualizar valores Máximos de Vida/Maná en base a la Vitalidad
-        hpMax = calcularNivelFinal(stats[0]);
-        manaMax = hpMax; // Según manual, Vitalidad da Vida y Maná
-        
-        // Si estamos en creación, mantener la barra llena
-        if(!modoJuego){
-            hpActual = hpMax;
-            manaActual = manaMax;
-        }
-
-        actualizarVisualesBarras();
-    }
-
-    // Funciones de las Barras Animadas
-    function modificarBarra(tipo, multiplicadorOperacion) {
-        // Obtenemos el valor escrito en el cuadrito (Ej: "8" de daño)
-        const inputElem = document.getElementById(`${tipo}-input`);
-        const valor = parseInt(inputElem.value) || 0;
-        
-        if(valor === 0) return; // Si no hay número, no hace nada
-
-        if (tipo === 'hp') {
-            hpActual += (valor * multiplicadorOperacion);
-            // Evitar que baje de 0 o suba más del máximo
-            if (hpActual < 0) hpActual = 0;
-            if (hpActual > hpMax) hpActual = hpMax;
-        } else if (tipo === 'mana') {
-            manaActual += (valor * multiplicadorOperacion);
-            if (manaActual < 0) manaActual = 0;
-            if (manaActual > manaMax) manaActual = manaMax;
-        }
-
-        // Limpiar la cajita después de usarla
-        inputElem.value = 1;
-        
-        actualizarVisualesBarras();
-        
-        // Si la vida llega a 0, lanzar alerta de "Caer en Batalla" según el manual
-        if(hpActual === 0) {
-            setTimeout(() => alert("¡TUS PUNTOS DE VIDA SON 0! Comienza tu etapa de salvación (Tira los dados del destino)."), 600);
-        }
-    }
-
-    function actualizarVisualesBarras() {
-        // Vida
-        const hpPorcentaje = (hpActual / hpMax) * 100;
-        const hpBar = document.getElementById('hp-bar');
-        const hpTextDisplay = document.getElementById('hp-text-display');
-        
-        hpBar.style.width = `${hpPorcentaje}%`;
-        hpTextDisplay.innerText = `${hpActual} / ${hpMax}`;
-
-        // Lógica para que se ponga en rojo si tiene menos del 30%
-        if (hpPorcentaje <= 30) {
-            hpBar.classList.add('low');
-            hpTextDisplay.classList.add('low');
-        } else {
-            hpBar.classList.remove('low');
-            hpTextDisplay.classList.remove('low');
-        }
-
-        // Maná
-        const manaPorcentaje = (manaActual / manaMax) * 100;
-        document.getElementById('mana-bar').style.width = `${manaPorcentaje}%`;
-        document.getElementById('mana-text-display').innerText = `${manaActual} / ${manaMax}`;
-    }
-
-    // Funciones de control de stats
-    function modificarPuntoInicial(index, valor) {
-        const stat = stats[index];
-        if (valor === -1 && stat.ptsIniciales > 0) {
-            stat.ptsIniciales -= 1;
-            puntosInicialesDisp += 1;
-        } else if (valor === 1 && puntosInicialesDisp > 0) {
-            stat.ptsIniciales += 1;
-            puntosInicialesDisp -= 1;
-        }
-        renderizarTabla();
-    }
-
-    function iniciarPartida() {
-        modoJuego = true;
-        document.getElementById('fase-creacion').classList.add('hidden');
-        document.getElementById('fase-juego').classList.remove('hidden');
-        document.getElementById('col-asignar').classList.add('hidden');
-        document.getElementById('col-mejora').classList.remove('hidden');
-
-        hpActual = hpMax;
-        manaActual = manaMax;
-        
-        renderizarTabla();
-    }
-
-    function subirNivelGeneral() {
-        nivelPersonaje++;
-        puntosMejoraDisp++;
-        
-        // La vitalidad sube automáticamente (su multi es 5). Curamos eso.
-        const incrementoVitalidad = stats[0].mult;
-        hpMax += incrementoVitalidad;
-        manaMax += incrementoVitalidad;
-        hpActual += incrementoVitalidad;
-        manaActual += incrementoVitalidad;
-        
-        renderizarTabla();
-    }
-
-    function gastarPuntoMejora(index) {
-        if (puntosMejoraDisp > 0 && stats[index].id !== 'vitalidad') {
-            stats[index].ptsMejora++;
-            puntosMejoraDisp--;
-            renderizarTabla();
-        }
-    }
-
-    // Iniciar
-    renderizarTabla();
-</script>
-
+<script src="app.js"></script>
 </body>
 </html>
