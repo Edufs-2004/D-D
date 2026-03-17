@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>Panel de Personaje D&D</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
@@ -11,12 +12,10 @@
     
     <div class="panel">
         <h2>Atributos y Niveles</h2>
-        
         <div class="controls-box" id="fase-creacion">
             <span style="font-weight: bold; font-size: 16px;">Puntos Iniciales: <span id="puntos-iniciales" class="text-green">15</span></span>
             <button class="btn btn-blue" id="btn-comenzar" onclick="iniciarPartida()" disabled>Terminar Creación</button>
         </div>
-
         <div class="controls-box hidden" id="fase-juego">
             <div class="level-badge">Nivel General: <span id="nivel-general">1</span></div>
             <div>
@@ -24,7 +23,6 @@
                 <button class="btn btn-green" onclick="subirNivelGeneral()">+ Subir Nivel</button>
             </div>
         </div>
-
         <table>
             <thead>
                 <tr>
@@ -35,8 +33,7 @@
                     <th class="hidden" id="col-mejora">Usar Mejora</th>
                 </tr>
             </thead>
-            <tbody id="tabla-stats">
-                </tbody>
+            <tbody id="tabla-stats"></tbody>
         </table>
         <p style="font-size: 11px; color: #7f8c8d; margin-top: 5px;">* Los números en <span style="color: #2980b9; font-weight: bold;">azul</span> representan bonus por equipamiento.</p>
     </div>
@@ -68,43 +65,37 @@
         <h3>Equipamiento</h3>
         
         <div class="inventory-section">
-            <h4 style="margin: 0 0 5px 0; font-size: 14px;">Defensa (1)</h4>
+            <h4 style="margin: 0 0 5px 0; font-size: 14px;">Defensa Activa (Afecta Stats)</h4>
             <ul class="inventory-list">
-                <li>
+                <li class="autocomplete-wrapper">
                     <label>Pecho</label>
-                    <select id="eq-armadura" onchange="actualizarEquipamiento()">
-                        <option value="">-- Sin armadura --</option>
-                    </select>
+                    <input type="text" id="eq-armadura" placeholder="Busca armadura..." autocomplete="off">
                 </li>
             </ul>
         </div>
 
         <div class="inventory-section">
-            <h4 style="margin: 0 0 5px 0; font-size: 14px;">Manos (2)</h4>
+            <h4 style="margin: 0 0 5px 0; font-size: 14px;">Manos Activas (Afecta Stats)</h4>
             <ul class="inventory-list">
-                <li>
+                <li class="autocomplete-wrapper">
                     <label>Mano 1</label>
-                    <select id="eq-mano1" onchange="actualizarEquipamiento()">
-                        <option value="">-- Mano vacía --</option>
-                    </select>
+                    <input type="text" id="eq-mano1" placeholder="Busca arma/escudo..." autocomplete="off">
                 </li>
-                <li>
+                <li class="autocomplete-wrapper">
                     <label>Mano 2</label>
-                    <select id="eq-mano2" onchange="actualizarEquipamiento()">
-                        <option value="">-- Mano vacía --</option>
-                    </select>
+                    <input type="text" id="eq-mano2" placeholder="Busca arma/escudo..." autocomplete="off">
                 </li>
             </ul>
         </div>
 
         <div class="inventory-section">
-            <h4 style="margin: 0 0 5px 0; font-size: 14px;">Mochila / Inventario (5)</h4>
+            <h4 style="margin: 0 0 5px 0; font-size: 14px;">Mochila (No afecta Stats)</h4>
             <ul class="inventory-list">
-                <li><label>Slot 1</label><input type="text"></li>
-                <li><label>Slot 2</label><input type="text"></li>
-                <li><label>Slot 3</label><input type="text"></li>
-                <li><label>Slot 4</label><input type="text"></li>
-                <li><label>Slot 5</label><input type="text"></li>
+                <li class="autocomplete-wrapper"><label>Slot 1</label><input type="text" id="inv-1" placeholder="Busca cualquier item..." autocomplete="off"></li>
+                <li class="autocomplete-wrapper"><label>Slot 2</label><input type="text" id="inv-2" placeholder="Busca cualquier item..." autocomplete="off"></li>
+                <li class="autocomplete-wrapper"><label>Slot 3</label><input type="text" id="inv-3" placeholder="Busca cualquier item..." autocomplete="off"></li>
+                <li class="autocomplete-wrapper"><label>Slot 4</label><input type="text" id="inv-4" placeholder="Busca cualquier item..." autocomplete="off"></li>
+                <li class="autocomplete-wrapper"><label>Slot 5</label><input type="text" id="inv-5" placeholder="Busca cualquier item..." autocomplete="off"></li>
             </ul>
         </div>
     </div>

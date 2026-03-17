@@ -1,19 +1,40 @@
-// --- 1. BASE DE DATOS LOCAL ---
-const baseDatosItems = [
+// --- 1. CONFIGURACIÓN DE SUPABASE ---
+// Reemplaza estas comillas con las credenciales de tu proyecto Supabase
+const SUPABASE_URL = 'https://pnbtlgocsylapwuwqnwj.supabase.co'; 
+const SUPABASE_ANON_KEY = 'TUsb_publishable_u4MzN0dIb0a9LfkJG68rKg_ZMr63uXn';
+
+let supabase = null;
+if (SUPABASE_URL !== 'TU_SUPABASE_URL_AQUI') {
+    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+}
+
+// Base de datos que se llenará con Supabase (o usa estos de respaldo si falla)
+let baseDatosItems = [
     { id: 'arm_cuero', nombre: 'Armadura de Cuero', tipo: 'armadura', bonus: { defensa: 2 } },
     { id: 'arm_malla', nombre: 'Cota de Malla', tipo: 'armadura', bonus: { defensa: 5, velocidad: -1 } },
-    { id: 'arm_placas', nombre: 'Armadura de Placas', tipo: 'armadura', bonus: { defensa: 8, velocidad: -3, destreza: -1 } },
-    
-    { id: 'wpn_daga', nombre: 'Daga Rápida', tipo: 'arma', bonus: { ataque: 1, velocidad: 1 } },
-    { id: 'wpn_espada_corta', nombre: 'Espada Corta', tipo: 'arma', bonus: { ataque: 3 } },
     { id: 'wpn_espada_larga', nombre: 'Espada Larga', tipo: 'arma', bonus: { ataque: 5, destreza: -1 } },
-    { id: 'wpn_baculo_roble', nombre: 'Báculo de Roble', tipo: 'arma', bonus: { ataque_magico: 4, inteligencia: 2 } },
-    
-    { id: 'shd_madera', nombre: 'Escudo de Madera', tipo: 'escudo', bonus: { defensa: 2 } },
-    { id: 'shd_hierro', nombre: 'Escudo de Hierro', tipo: 'escudo', bonus: { defensa: 4, velocidad: -1 } }
+    { id: 'shd_hierro', nombre: 'Escudo de Hierro', tipo: 'escudo', bonus: { defensa: 4, velocidad: -1 } },
+    { id: 'obj_pocion', nombre: 'Poción de Curación', tipo: 'objeto', bonus: null },
+    { id: 'obj_cuerda', nombre: 'Cuerda (10m)', tipo: 'objeto', bonus: null }
 ];
 
-// --- 2. VARIABLES GLOBALES ---
+// Al cargar la página, intentamos traer los items de Supabase
+async function cargarItemsDesdeSupabase() {
+    if (supabase) {
+        try {
+            const { data, error } = await supabase.from('items').select('*');
+            if (error) throw error;
+            if (data && data.length > 0) {
+                baseDatosItems = data; // Reemplazamos el local con la nube
+                console.log("Items cargados desde Supabase:", baseDatosItems);
+            }
+        } catch (error) {
+            console.error("Error conectando a Supabase, usando items locales:", error);
+        }
+    }
+}
+
+// --- 2. VARIABLES GLOBALES DE STATS ---
 let modoJuego = false;
 let puntosInicialesDisp = 15;
 let nivelPersonaje = 1;
@@ -31,34 +52,93 @@ const stats = [
     { id: 'destreza', nombre: 'DESTREZA', base: 1, ptsIniciales: 0, mult: 1, ptsMejora: 0, bonusEq: 0 }
 ];
 
-// --- 3. FUNCIONES DE EQUIPAMIENTO ---
-function poblarSelectores() {
-    const selArmadura = document.getElementById('eq-armadura');
-    const selMano1 = document.getElementById('eq-mano1');
-    const selMano2 = document.getElementById('eq-mano2');
-
-    baseDatosItems.forEach(item => {
-        const option = `<option value="${item.id}">${item.nombre}</option>`;
-        if (item.tipo === 'armadura') selArmadura.innerHTML += option;
-        else if (item.tipo === 'arma' || item.tipo === 'escudo') {
-            selMano1.innerHTML += option;
-            selMano2.innerHTML += option;
+// --- 3. SISTEMA DE AUTOCOMPLETADO INTELIGENTE ---
+function activarAutocompletado(inputId, tiposPermitidos, afectaStats) {
+    const inp = document.getElementById(inputId);
+    
+    // Al escribir en el input
+    inp.addEventListener("input", function(e) {
+        let val = this.value;
+        cerrarListas(); // Cierra sugerencias anteriores
+        if (!val) {
+            // Si el usuario borra el texto, desequipamos el item
+            this.dataset.itemId = "";
+            if(afectaStats) actualizarEquipamiento();
+            return false;
         }
+
+        let listaDiv = document.createElement("DIV");
+        listaDiv.setAttribute("id", this.id + "autocomplete-list");
+        listaDiv.setAttribute("class", "autocomplete-items");
+        this.parentNode.appendChild(listaDiv);
+
+        // Filtrar items según lo que escribió y si es armadura/arma/mochila
+        let coincidencias = baseDatosItems.filter(item => 
+            (tiposPermitidos.includes('todos') || tiposPermitidos.includes(item.tipo)) &&
+            item.nombre.toLowerCase().includes(val.toLowerCase())
+        );
+
+        coincidencias.forEach(item => {
+            let itemDiv = document.createElement("DIV");
+            // Resaltar la coincidencia
+            let index = item.nombre.toLowerCase().indexOf(val.toLowerCase());
+            itemDiv.innerHTML = item.nombre.substring(0, index);
+            itemDiv.innerHTML += "<strong>" + item.nombre.substring(index, index + val.length) + "</strong>";
+            itemDiv.innerHTML += item.nombre.substring(index + val.length);
+            
+            // Al hacer clic en la sugerencia
+            itemDiv.addEventListener("click", function(e) {
+                inp.value = item.nombre;        // Muestra el nombre
+                inp.dataset.itemId = item.id;   // Guarda el ID oculto
+                cerrarListas();
+                
+                // SOLO actualizar stats si es un campo que afecta (Pecho, Manos)
+                if(afectaStats) actualizarEquipamiento();
+            });
+            listaDiv.appendChild(itemDiv);
+        });
     });
+
+    // Cerrar si se hace clic fuera
+    document.addEventListener("click", function (e) { cerrarListas(e.target); });
+    function cerrarListas(elmnt) {
+        var x = document.getElementsByClassName("autocomplete-items");
+        for (var i = 0; i < x.length; i++) {
+            if (elmnt != x[i] && elmnt != inp) {
+                x[i].parentNode.removeChild(x[i]);
+            }
+        }
+    }
 }
 
-function actualizarEquipamiento() {
-    stats.forEach(s => s.bonusEq = 0); // Resetear bonus
+// Inicializar todos los inputs
+function inicializarInventario() {
+    // Equipamiento (SÍ afecta stats)
+    activarAutocompletado("eq-armadura", ["armadura"], true);
+    activarAutocompletado("eq-mano1", ["arma", "escudo"], true);
+    activarAutocompletado("eq-mano2", ["arma", "escudo"], true);
+    
+    // Mochila (NO afecta stats)
+    for(let i=1; i<=5; i++) {
+        activarAutocompletado(`inv-${i}`, ["todos"], false);
+    }
+}
 
-    const idsEquipados = [
-        document.getElementById('eq-armadura').value,
-        document.getElementById('eq-mano1').value,
-        document.getElementById('eq-mano2').value
+// --- 4. CÁLCULO DE EQUIPAMIENTO ACTIVO ---
+function actualizarEquipamiento() {
+    stats.forEach(s => s.bonusEq = 0); // Resetear a 0
+
+    // Solo leemos los IDs de los inputs que sí afectan stats
+    const inputsActivos = [
+        document.getElementById('eq-armadura'),
+        document.getElementById('eq-mano1'),
+        document.getElementById('eq-mano2')
     ];
 
-    idsEquipados.forEach(id => {
-        if (id) {
-            const item = baseDatosItems.find(i => i.id === id);
+    inputsActivos.forEach(input => {
+        let itemId = input.dataset.itemId;
+        if (itemId) {
+            const item = baseDatosItems.find(i => i.id === itemId);
             if (item && item.bonus) {
                 for (const [statId, valor] of Object.entries(item.bonus)) {
                     const statObj = stats.find(s => s.id === statId);
@@ -70,12 +150,11 @@ function actualizarEquipamiento() {
     renderizarTabla();
 }
 
-// --- 4. FUNCIONES DE STATS Y RENDERIZADO ---
+// --- 5. LOGICA DE STATS Y RENDERIZADO ---
 function calcularNivelFinal(stat) {
     let nivelBase = stat.id === 'vitalidad' 
         ? stat.base + ((nivelPersonaje - 1) * stat.mult)
         : (stat.base + stat.ptsIniciales) + (stat.mult * stat.ptsMejora);
-    
     return { puro: nivelBase, total: nivelBase + stat.bonusEq };
 }
 
@@ -94,12 +173,10 @@ function recalcularMultiplicadores() {
 function renderizarTabla() {
     const tbody = document.getElementById('tabla-stats');
     tbody.innerHTML = '';
-
     if (!modoJuego) recalcularMultiplicadores();
 
     stats.forEach((stat, index) => {
         const nivel = calcularNivelFinal(stat);
-        
         let textoNivel = `${nivel.puro}`;
         if (stat.bonusEq > 0) textoNivel += ` <span class="text-blue">(+${stat.bonusEq})</span>`;
         else if (stat.bonusEq < 0) textoNivel += ` <span style="color:#e74c3c;">(${stat.bonusEq})</span>`;
@@ -143,18 +220,16 @@ function renderizarTabla() {
         const dif = nuevoMax - hpMax;
         hpMax = nuevoMax;
         manaMax = nuevoMax;
-        hpActual += dif; 
-        manaActual += dif;
+        hpActual += dif; manaActual += dif;
     }
     actualizarVisualesBarras();
 }
 
-// --- 5. BARRAS DE ESTADO Y BOTONES ---
+// Funciones de Barras y Controles se mantienen
 function modificarBarra(tipo, multiplicadorOperacion) {
     const inputElem = document.getElementById(`${tipo}-input`);
     const valor = parseInt(inputElem.value) || 0;
     if(valor === 0) return;
-
     if (tipo === 'hp') {
         hpActual += (valor * multiplicadorOperacion);
         if (hpActual < 0) hpActual = 0;
@@ -171,13 +246,10 @@ function modificarBarra(tipo, multiplicadorOperacion) {
 
 function actualizarVisualesBarras() {
     const hpPorcentaje = (hpActual / hpMax) * 100;
-    const hpBar = document.getElementById('hp-bar');
-    const hpTextDisplay = document.getElementById('hp-text-display');
-    hpBar.style.width = `${hpPorcentaje}%`;
-    hpTextDisplay.innerText = `${hpActual} / ${hpMax}`;
-    
-    if (hpPorcentaje <= 30) { hpBar.classList.add('low'); hpTextDisplay.classList.add('low'); } 
-    else { hpBar.classList.remove('low'); hpTextDisplay.classList.remove('low'); }
+    document.getElementById('hp-bar').style.width = `${hpPorcentaje}%`;
+    document.getElementById('hp-text-display').innerText = `${hpActual} / ${hpMax}`;
+    if (hpPorcentaje <= 30) { document.getElementById('hp-bar').classList.add('low'); document.getElementById('hp-text-display').classList.add('low'); } 
+    else { document.getElementById('hp-bar').classList.remove('low'); document.getElementById('hp-text-display').classList.remove('low'); }
 
     const manaPorcentaje = (manaActual / manaMax) * 100;
     document.getElementById('mana-bar').style.width = `${manaPorcentaje}%`;
@@ -196,28 +268,22 @@ function iniciarPartida() {
     document.getElementById('fase-juego').classList.remove('hidden');
     document.getElementById('col-asignar').classList.add('hidden');
     document.getElementById('col-mejora').classList.remove('hidden');
-    
     const vitalidadNivel = calcularNivelFinal(stats[0]);
-    hpMax = vitalidadNivel.total;
-    manaMax = vitalidadNivel.total;
-    hpActual = hpMax;
-    manaActual = manaMax;
-    
+    hpMax = vitalidadNivel.total; manaMax = vitalidadNivel.total;
+    hpActual = hpMax; manaActual = manaMax;
     renderizarTabla();
 }
 
-function subirNivelGeneral() {
-    nivelPersonaje++; puntosMejoraDisp++;
-    renderizarTabla();
-}
-
+function subirNivelGeneral() { nivelPersonaje++; puntosMejoraDisp++; renderizarTabla(); }
 function gastarPuntoMejora(index) {
-    if (puntosMejoraDisp > 0 && stats[index].id !== 'vitalidad') {
-        stats[index].ptsMejora++; puntosMejoraDisp--;
-        renderizarTabla();
-    }
+    if (puntosMejoraDisp > 0 && stats[index].id !== 'vitalidad') { stats[index].ptsMejora++; puntosMejoraDisp--; renderizarTabla(); }
 }
 
-// Inicializar
-poblarSelectores();
-renderizarTabla();
+// Inicialización asíncrona para cargar datos primero
+async function iniciarApp() {
+    await cargarItemsDesdeSupabase();
+    inicializarInventario();
+    renderizarTabla();
+}
+
+iniciarApp();
