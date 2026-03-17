@@ -30,7 +30,8 @@
         
         .btn { padding: 6px 12px; cursor: pointer; border: none; border-radius: 4px; color: white; font-weight: bold; transition: 0.2s; }
         .btn:disabled { background-color: #bdc3c7; cursor: not-allowed; }
-        .btn-small { padding: 2px 8px; font-size: 16px; margin: 0 2px; }
+        .btn-small { padding: 4px 10px; font-size: 16px; margin: 0 2px; }
+        .btn-icon { padding: 6px 10px; font-size: 14px; }
         
         .btn-blue { background-color: #3498db; } .btn-blue:hover:not(:disabled) { background-color: #2980b9; }
         .btn-green { background-color: #2ecc71; } .btn-green:hover:not(:disabled) { background-color: #27ae60; }
@@ -59,10 +60,12 @@
         .text-blue { color: #2980b9; font-weight: bold; font-size: 14px; }
         .text-muted { color: #7f8c8d; font-size: 12px; font-weight: bold; }
 
-        .autocomplete-wrapper { position: relative; display: flex; width: 100%; align-items: center;}
-        .autocomplete-items { position: absolute; border: 1px solid #d4d4d4; z-index: 99; top: 100%; left: 60px; right: 0; background-color: white; max-height: 200px; overflow-y: auto; box-shadow: 0px 4px 6px rgba(0,0,0,0.1); }
+        .autocomplete-wrapper { position: relative; display: flex; flex-grow: 1; align-items: center;}
+        .autocomplete-items { position: absolute; border: 1px solid #d4d4d4; z-index: 99; top: 100%; left: 0; right: 0; background-color: white; max-height: 200px; overflow-y: auto; box-shadow: 0px 4px 6px rgba(0,0,0,0.1); }
         .autocomplete-items div { padding: 10px; cursor: pointer; background-color: #fff; border-bottom: 1px solid #d4d4d4; font-size: 14px; }
         .autocomplete-items div:hover { background-color: #e9e9e9; }
+        
+        .swap-select { width: 85px; padding: 6px; border: 1px solid #bdc3c7; border-radius: 4px; font-size: 12px; cursor: pointer; background: #ecf0f1; }
     </style>
 </head>
 <body>
@@ -122,9 +125,9 @@
 
         <h3 style="margin-top: 20px;">Efectos Activos (Maldiciones/Buffs)</h3>
         <ul class="inventory-list" id="lista-efectos">
-            <li>
-                <input type="text" id="efecto-nombre" placeholder="Ej: Maldición de bosque" style="width: 50%;">
-                <select id="efecto-stat" style="width: 25%;" onchange="actualizarEquipamiento()">
+            <li style="gap: 5px;">
+                <input type="text" id="efecto-nombre" placeholder="Ej: Maldición del Bosque" style="width: 50%;">
+                <select id="efecto-stat" style="width: 25%; padding: 8px; border: 1px solid #bdc3c7; border-radius: 4px;" onchange="actualizarEquipamiento()">
                     <option value="velocidad">Velocidad</option>
                     <option value="ataque">Ataque</option>
                     <option value="defensa">Defensa</option>
@@ -175,26 +178,58 @@
         <div class="inventory-section">
             <h4 style="margin: 0 0 5px 0; font-size: 14px;">Defensa Activa (Afecta Stats)</h4>
             <ul class="inventory-list">
-                <li class="autocomplete-wrapper"><label>Pecho</label><input type="text" id="eq-armadura" placeholder="Busca armadura..." autocomplete="off"></li>
+                <li>
+                    <label>Pecho</label>
+                    <div class="autocomplete-wrapper"><input type="text" id="eq-armadura" placeholder="Busca armadura..." autocomplete="off"></div>
+                    <button class="btn btn-icon btn-red" onclick="desequipar('eq-armadura')" title="Quitar y guardar en mochila">↓</button>
+                </li>
             </ul>
         </div>
 
         <div class="inventory-section">
             <h4 style="margin: 0 0 5px 0; font-size: 14px;">Manos Activas (Afecta Stats)</h4>
             <ul class="inventory-list">
-                <li class="autocomplete-wrapper"><label>Mano 1</label><input type="text" id="eq-mano1" placeholder="Busca arma/escudo..." autocomplete="off"></li>
-                <li class="autocomplete-wrapper"><label>Mano 2</label><input type="text" id="eq-mano2" placeholder="Busca arma/escudo..." autocomplete="off"></li>
+                <li>
+                    <label>Mano 1</label>
+                    <div class="autocomplete-wrapper"><input type="text" id="eq-mano1" placeholder="Busca arma/escudo..." autocomplete="off"></div>
+                    <button class="btn btn-icon btn-red" onclick="desequipar('eq-mano1')" title="Quitar y guardar en mochila">↓</button>
+                </li>
+                <li>
+                    <label>Mano 2</label>
+                    <div class="autocomplete-wrapper"><input type="text" id="eq-mano2" placeholder="Busca arma/escudo..." autocomplete="off"></div>
+                    <button class="btn btn-icon btn-red" onclick="desequipar('eq-mano2')" title="Quitar y guardar en mochila">↓</button>
+                </li>
             </ul>
         </div>
 
         <div class="inventory-section">
-            <h4 style="margin: 0 0 5px 0; font-size: 14px;">Mochila (No afecta Stats)</h4>
+            <h4 style="margin: 0 0 5px 0; font-size: 14px;">Mochila (Ocupa esta sección para intercambiar)</h4>
             <ul class="inventory-list">
-                <li class="autocomplete-wrapper"><label>Slot 1</label><input type="text" id="inv-1" autocomplete="off"></li>
-                <li class="autocomplete-wrapper"><label>Slot 2</label><input type="text" id="inv-2" autocomplete="off"></li>
-                <li class="autocomplete-wrapper"><label>Slot 3</label><input type="text" id="inv-3" autocomplete="off"></li>
-                <li class="autocomplete-wrapper"><label>Slot 4</label><input type="text" id="inv-4" autocomplete="off"></li>
-                <li class="autocomplete-wrapper"><label>Slot 5</label><input type="text" id="inv-5" autocomplete="off"></li>
+                <li>
+                    <label>Slot 1</label><div class="autocomplete-wrapper"><input type="text" id="inv-1" autocomplete="off"></div>
+                    <select id="target-1" class="swap-select"><option value="eq-mano1">Mano 1</option><option value="eq-mano2">Mano 2</option><option value="eq-armadura">Pecho</option></select>
+                    <button class="btn btn-icon btn-green" onclick="intercambiar(1)" title="Intercambiar Item">🔄</button>
+                </li>
+                <li>
+                    <label>Slot 2</label><div class="autocomplete-wrapper"><input type="text" id="inv-2" autocomplete="off"></div>
+                    <select id="target-2" class="swap-select"><option value="eq-mano1">Mano 1</option><option value="eq-mano2">Mano 2</option><option value="eq-armadura">Pecho</option></select>
+                    <button class="btn btn-icon btn-green" onclick="intercambiar(2)" title="Intercambiar Item">🔄</button>
+                </li>
+                <li>
+                    <label>Slot 3</label><div class="autocomplete-wrapper"><input type="text" id="inv-3" autocomplete="off"></div>
+                    <select id="target-3" class="swap-select"><option value="eq-mano1">Mano 1</option><option value="eq-mano2">Mano 2</option><option value="eq-armadura">Pecho</option></select>
+                    <button class="btn btn-icon btn-green" onclick="intercambiar(3)" title="Intercambiar Item">🔄</button>
+                </li>
+                <li>
+                    <label>Slot 4</label><div class="autocomplete-wrapper"><input type="text" id="inv-4" autocomplete="off"></div>
+                    <select id="target-4" class="swap-select"><option value="eq-mano1">Mano 1</option><option value="eq-mano2">Mano 2</option><option value="eq-armadura">Pecho</option></select>
+                    <button class="btn btn-icon btn-green" onclick="intercambiar(4)" title="Intercambiar Item">🔄</button>
+                </li>
+                <li>
+                    <label>Slot 5</label><div class="autocomplete-wrapper"><input type="text" id="inv-5" autocomplete="off"></div>
+                    <select id="target-5" class="swap-select"><option value="eq-mano1">Mano 1</option><option value="eq-mano2">Mano 2</option><option value="eq-armadura">Pecho</option></select>
+                    <button class="btn btn-icon btn-green" onclick="intercambiar(5)" title="Intercambiar Item">🔄</button>
+                </li>
             </ul>
         </div>
 
@@ -215,7 +250,7 @@
 </div>
 
 <script>
-    // 1. BASE DE DATOS LOCAL SEGURA
+    // 1. BASE DE DATOS LOCAL
     let baseDatosItems = [
         { id: 'arm_cuero', nombre: 'Armadura de Cuero', tipo: 'armadura', bonus: { defensa: 2 } },
         { id: 'arm_malla', nombre: 'Cota de Malla', tipo: 'armadura', bonus: { defensa: 5, velocidad: -1 } },
@@ -242,7 +277,6 @@
         { id: 'destreza', nombre: 'DESTREZA', base: 1, ptsIniciales: 0, mult: 1, ptsMejora: 0, bonusEq: 0, bonusEfecto: 0 }
     ];
 
-    // 3. FUNCIONES LÓGICAS
     function actualizarImagen() {
         const url = document.getElementById('char-img-url').value;
         if(url) document.getElementById('char-img-display').src = url;
@@ -266,13 +300,19 @@
     function actualizarEquipamiento() {
         stats.forEach(s => { s.bonusEq = 0; s.bonusEfecto = 0; }); 
 
-        // Leer equipamiento de las manos
-        const inputsActivos = ['eq-armadura', 'eq-mano1', 'eq-mano2'];
-        inputsActivos.forEach(id => {
-            const input = document.getElementById(id);
+        const slotsEquipables = [
+            { id: 'eq-armadura', tiposValidos: ['armadura'] },
+            { id: 'eq-mano1', tiposValidos: ['arma', 'escudo'] },
+            { id: 'eq-mano2', tiposValidos: ['arma', 'escudo'] }
+        ];
+
+        slotsEquipables.forEach(slot => {
+            const input = document.getElementById(slot.id);
             if (input && input.dataset.itemId) {
                 const item = baseDatosItems.find(i => i.id === input.dataset.itemId);
-                if (item && item.bonus) {
+                
+                // Solo suma si el item corresponde al tipo de slot (ej: Armadura en Pecho)
+                if (item && item.bonus && slot.tiposValidos.includes(item.tipo)) {
                     for (const [statId, valor] of Object.entries(item.bonus)) {
                         const statObj = stats.find(s => s.id === statId);
                         if (statObj) statObj.bonusEq += valor;
@@ -281,10 +321,9 @@
             }
         });
 
-        // Leer efecto negativo/positivo
-        const efectoValorInput = document.getElementById('efecto-valor').value;
-        if (efectoValorInput !== "") {
-            const efectoValor = parseInt(efectoValorInput);
+        const efectoValorInput = document.getElementById('efecto-valor');
+        if (efectoValorInput && efectoValorInput.value !== "") {
+            const efectoValor = parseInt(efectoValorInput.value);
             if (!isNaN(efectoValor)) {
                 const statObj = stats.find(s => s.id === document.getElementById('efecto-stat').value);
                 if (statObj) statObj.bonusEfecto += efectoValor;
@@ -293,9 +332,10 @@
         renderizarTabla();
     }
 
-    // 4. RENDERIZADO VISUAL
     function renderizarTabla() {
         const tbody = document.getElementById('tabla-stats');
+        if(!tbody) return; 
+        
         tbody.innerHTML = '';
         if (!modoJuego) recalcularMultiplicadores();
 
@@ -312,18 +352,25 @@
             let colInt = '';
             if (stat.id === 'vitalidad') { colInt = `<td><span class="text-muted">Auto</span></td>`; } 
             else if (!modoJuego) {
-                colInt = `<td><button class="btn btn-blue btn-small" onclick="modificarPuntoInicial(${index}, -1)">-</button> <span style="display:inline-block; width:20px; font-weight:bold;">${stat.ptsIniciales}</span> <button class="btn btn-blue btn-small" onclick="modificarPuntoInicial(${index}, 1)" ${puntosInicialesDisp === 0 ? 'disabled' : ''}>+</button></td>`;
+                colInt = `<td><button class="btn btn-blue btn-small" onclick="modificarPuntoInicial(${index}, -1)">-</button> <span style="display:inline-block; width:20px; font-weight:bold; text-align:center;">${stat.ptsIniciales}</span> <button class="btn btn-blue btn-small" onclick="modificarPuntoInicial(${index}, 1)" ${puntosInicialesDisp === 0 ? 'disabled' : ''}>+</button></td>`;
             } else {
-                colInt = `<td><button class="btn btn-green btn-small" onclick="gastarPuntoMejora(${index})" ${puntosMejoraDisp === 0 ? 'disabled' : ''}>+ Mejorar</button><span style="font-size: 12px; color: #7f8c8d; display: block;">Gastados: ${stat.ptsMejora}</span></td>`;
+                colInt = `<td><button class="btn btn-green btn-small" onclick="gastarPuntoMejora(${index})" ${puntosMejoraDisp === 0 ? 'disabled' : ''}>+ Mejorar</button><span style="font-size: 12px; color: #7f8c8d; display: block; margin-top: 3px;">Gastados: ${stat.ptsMejora}</span></td>`;
             }
 
             tbody.innerHTML += `<tr><td><strong>${stat.nombre}</strong></td><td style="font-size: 18px; font-weight: bold;">${textoNivel}</td>${colInt}<td style="color: #8e44ad; font-weight: bold;">+${stat.mult}</td></tr>`;
         });
 
-        document.getElementById('puntos-iniciales').innerText = puntosInicialesDisp;
-        document.getElementById('btn-comenzar').disabled = puntosInicialesDisp > 0;
-        document.getElementById('nivel-general').innerText = nivelPersonaje;
-        document.getElementById('puntos-mejora').innerText = puntosMejoraDisp;
+        const initPoints = document.getElementById('puntos-iniciales');
+        if(initPoints) initPoints.innerText = puntosInicialesDisp;
+        
+        const btnStart = document.getElementById('btn-comenzar');
+        if(btnStart) btnStart.disabled = puntosInicialesDisp > 0;
+        
+        const genLevel = document.getElementById('nivel-general');
+        if(genLevel) genLevel.innerText = nivelPersonaje;
+        
+        const upgradePoints = document.getElementById('puntos-mejora');
+        if(upgradePoints) upgradePoints.innerText = puntosMejoraDisp;
 
         const vNivel = calcularNivelFinal(stats[0]);
         if (hpMax !== vNivel.total) {
@@ -333,6 +380,61 @@
         actualizarVisualesBarras();
     }
 
+    // --- NUEVA LÓGICA: DESEQUIPAR A MOCHILA ---
+    function desequipar(idEquipado) {
+        const inputEq = document.getElementById(idEquipado);
+        if (!inputEq || !inputEq.value) return; // Si no hay nada en la mano, no hace nada
+
+        // Buscar el primer slot vacío en la mochila (del 1 al 5)
+        let slotVacio = null;
+        for (let i = 1; i <= 5; i++) {
+            const invInput = document.getElementById(`inv-${i}`);
+            if (invInput && !invInput.value) {
+                slotVacio = invInput;
+                break;
+            }
+        }
+
+        // Si no hay espacio, mostramos alerta y abortamos
+        if (!slotVacio) {
+            alert("Mochila llena. No hay espacio para guardar esto.");
+            return;
+        }
+
+        // Mover el texto y el ID oculto del item a la mochila
+        slotVacio.value = inputEq.value;
+        slotVacio.dataset.itemId = inputEq.dataset.itemId || "";
+
+        // Limpiar la mano/pecho
+        inputEq.value = "";
+        inputEq.dataset.itemId = "";
+
+        // Recalcular estadísticas
+        actualizarEquipamiento();
+    }
+
+    // --- LÓGICA: INTERCAMBIAR CON MOCHILA ---
+    function intercambiar(slotNum) {
+        const invInput = document.getElementById(`inv-${slotNum}`);
+        const targetSelectId = document.getElementById(`target-${slotNum}`).value;
+        const targetInput = document.getElementById(targetSelectId);
+
+        if (!invInput || !targetInput) return;
+        if (!invInput.value && !targetInput.value) return; 
+
+        const tempValorDestino = targetInput.value;
+        const tempIdDestino = targetInput.dataset.itemId || "";
+
+        targetInput.value = invInput.value;
+        targetInput.dataset.itemId = invInput.dataset.itemId || "";
+
+        invInput.value = tempValorDestino;
+        invInput.dataset.itemId = tempIdDestino;
+
+        actualizarEquipamiento(); 
+    }
+
+    // --- FUNCIONES DE BARRAS DE VIDA/MANA ---
     function modificarBarra(tipo, mult) {
         const inputElem = document.getElementById(`${tipo}-input`);
         const valor = parseInt(inputElem.value) || 0;
@@ -341,20 +443,24 @@
         if (tipo === 'hp') { hpActual += (valor * mult); if (hpActual < 0) hpActual = 0; if (hpActual > hpMax) hpActual = hpMax; } 
         else if (tipo === 'mana') { manaActual += (valor * mult); if (manaActual < 0) manaActual = 0; if (manaActual > manaMax) manaActual = manaMax; }
         inputElem.value = 1; actualizarVisualesBarras();
-        if(hpActual === 0) setTimeout(() => alert("¡TUS PUNTOS DE VIDA SON 0! Tira los dados."), 600);
+        if(hpActual === 0) setTimeout(() => alert("¡TUS PUNTOS DE VIDA SON 0! Tira los dados del destino."), 600);
     }
 
     function actualizarVisualesBarras() {
         const hpPct = (hpActual / hpMax) * 100;
-        document.getElementById('hp-bar').style.width = `${hpPct}%`; document.getElementById('hp-text-display').innerText = `${hpActual} / ${hpMax}`;
-        if (hpPct <= 30) { document.getElementById('hp-bar').classList.add('low'); document.getElementById('hp-text-display').classList.add('low'); } 
-        else { document.getElementById('hp-bar').classList.remove('low'); document.getElementById('hp-text-display').classList.remove('low'); }
+        const hpBar = document.getElementById('hp-bar');
+        const hpText = document.getElementById('hp-text-display');
+        if(hpBar) { hpBar.style.width = `${hpPct}%`; if (hpPct <= 30) hpBar.classList.add('low'); else hpBar.classList.remove('low'); }
+        if(hpText) { hpText.innerText = `${hpActual} / ${hpMax}`; if (hpPct <= 30) hpText.classList.add('low'); else hpText.classList.remove('low'); }
 
         const manaPct = (manaActual / manaMax) * 100;
-        document.getElementById('mana-bar').style.width = `${manaPct}%`; document.getElementById('mana-text-display').innerText = `${manaActual} / ${manaMax}`;
+        const manaBar = document.getElementById('mana-bar');
+        if(manaBar) manaBar.style.width = `${manaPct}%`;
+        const manaText = document.getElementById('mana-text-display');
+        if(manaText) manaText.innerText = `${manaActual} / ${manaMax}`;
     }
 
-    // 5. AUTOCOMPLETADO
+    // --- AUTOCOMPLETADO ---
     function activarAutocompletado(inputId, tiposPermitidos, afectaStats) {
         const inp = document.getElementById(inputId);
         if(!inp) return;
@@ -368,10 +474,7 @@
             listaDiv.setAttribute("class", "autocomplete-items");
             this.parentNode.appendChild(listaDiv);
 
-            let coincidencias = baseDatosItems.filter(item => 
-                (tiposPermitidos.includes('todos') || tiposPermitidos.includes(item.tipo)) &&
-                item.nombre.toLowerCase().includes(val.toLowerCase())
-            );
+            let coincidencias = baseDatosItems.filter(item => item.nombre.toLowerCase().includes(val.toLowerCase()));
 
             coincidencias.forEach(item => {
                 let itemDiv = document.createElement("DIV");
@@ -395,7 +498,7 @@
         }
     }
 
-    // 6. CONTROLES DE PARTIDA
+    // --- CONTROLES DE PARTIDA ---
     function modificarPuntoInicial(i, v) {
         if (v === -1 && stats[i].ptsIniciales > 0) { stats[i].ptsIniciales -= 1; puntosInicialesDisp += 1; } 
         else if (v === 1 && puntosInicialesDisp > 0) { stats[i].ptsIniciales += 1; puntosInicialesDisp -= 1; }
