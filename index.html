@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Panel de Personaje D&D</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #eef2f5; padding: 20px; color: #333; }
+        .grid-container { display: grid; grid-template-columns: 1.2fr 1fr; gap: 20px; max-width: 1100px; margin: auto; }
+        .panel { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h2, h3 { margin-top: 0; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 5px; }
+        
+        /* Controles Superiores */
+        .controls-box { display: flex; justify-content: space-between; align-items: center; background: #ecf0f1; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
+        .level-badge { background: #f39c12; color: white; padding: 8px 15px; border-radius: 20px; font-weight: bold; font-size: 16px; }
+        
+        table { width: 100%; border-collapse: collapse; text-align: center; }
+        th, td { border: 1px solid #ddd; padding: 10px 5px; }
+        th { background-color: #34495e; color: white; font-size: 13px; }
+        
+        .btn { padding: 6px 12px; cursor: pointer; border: none; border-radius: 4px; background-color: #3498db; color: white; font-weight: bold; transition: 0.2s; }
+        .btn:hover:not(:disabled) { background-color: #2980b9; }
+        .btn:disabled { background-color: #bdc3c7; cursor: not-allowed; }
+        .btn-small { padding: 2px 8px; font-size: 16px; margin: 0 2px; }
+        .btn-upgrade { background-color: #27ae60; }
+        .btn-upgrade:hover:not(:disabled) { background-color: #2ecc71; }
+
+        /* Estilos de Estado e Inventario */
+        .status-box { display: flex; justify-content: space-around; margin-bottom: 20px; }
+        .status-item { text-align: center; background: #ecf0f1; padding: 15px; border-radius: 8px; width: 45%; }
+        .status-item input { width: 70px; font-size: 22px; text-align: center; font-weight: bold; border: 1px solid #bdc3c7; border-radius: 4px; }
+        
+        .inventory-section { margin-bottom: 15px; }
+        .inventory-list { list-style: none; padding: 0; margin: 0; }
+        .inventory-list li { margin-bottom: 6px; display: flex; align-items: center; }
+        .inventory-list label { width: 45px; font-weight: bold; color: #7f8c8d; font-size: 13px; }
+        .inventory-list input { flex-grow: 1; padding: 8px; border: 1px solid #bdc3c7; border-radius: 4px; font-family: inherit; }
+        
+        .hidden { display: none !important; }
+        .text-green { color: #27ae60; font-weight: bold; }
+        .text-muted { color: #7f8c8d; font-size: 12px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="grid-container">
+    
+    <div class="panel">
+        <h2>Atributos y Niveles</h2>
+        
+        <div class="controls-box" id="fase-creacion">
+            <span style="font-weight: bold; font-size: 16px;">Puntos Iniciales: <span id="puntos-iniciales" class="text-green">15</span></span>
+            <button class="btn" id="btn-comenzar" onclick="iniciarPartida()" disabled>Terminar Creación</button>
+        </div>
+
+        <div class="controls-box hidden" id="fase-juego">
+            <div class="level-badge">Nivel General: <span id="nivel-general">1</span></div>
+            <div>
+                <span style="font-weight: bold; margin-right: 15px;">Puntos de Mejora: <span id="puntos-mejora" class="text-green">0</span></span>
+                <button class="btn btn-upgrade" onclick="subirNivelGeneral()">+ Subir Nivel</button>
+            </div>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Stat</th>
+                    <th>Nivel Final</th>
+                    <th id="col-asignar">Asignar Inicial</th>
+                    <th>Mult. Fijo</th>
+                    <th class="hidden" id="col-mejora">Usar Mejora</th>
+                </tr>
+            </thead>
+            <tbody id="tabla-stats">
+                </tbody>
+        </table>
+    </div>
+
+    <div class="panel">
+        <h2>Estado Actual</h2>
+        <div class="status-box">
+            <div class="status-item">
+                <p style="margin: 0 0 5px 0; color: #c0392b; font-weight: bold;">VIDA</p>
+                <input type="number" id="hp-actual" value="20"> / <span id="hp-max">20</span>
+            </div>
+            <div class="status-item">
+                <p style="margin: 0 0 5px 0; color: #2980b9; font-weight: bold;">MANÁ</p>
+                <input type="number" id="mana-actual" value="20"> / <span id="mana-max">20</span>
+            </div>
+        </div>
+
+        <h3>Equipamiento</h3>
+        
+        <div class="inventory-section">
+            <h4 style="margin: 0 0 5px 0; font-size: 14px;">Defensa (1)</h4>
+            <ul class="inventory-list">
+                <li><label>Pecho</label><input type="text" placeholder="Armadura..."></li>
+            </ul>
+        </div>
+
+        <div class="inventory-section">
+            <h4 style="margin: 0 0 5px 0; font-size: 14px;">Manos (2)</h4>
+            <ul class="inventory-list">
+                <li><label>Mano 1</label><input type="text" placeholder="Arma principal / Escudo..."></li>
+                <li><label>Mano 2</label><input type="text" placeholder="Arma secundaria / Escudo..."></li>
+            </ul>
+        </div>
+
+        <div class="inventory-section">
+            <h4 style="margin: 0 0 5px 0; font-size: 14px;">Mochila / Inventario (5)</h4>
+            <ul class="inventory-list">
+                <li><label>Slot 1</label><input type="text" placeholder="Objeto..."></li>
+                <li><label>Slot 2</label><input type="text" placeholder="Objeto..."></li>
+                <li><label>Slot 3</label><input type="text" placeholder="Objeto..."></li>
+                <li><label>Slot 4</label><input type="text" placeholder="Objeto..."></li>
+                <li><label>Slot 5</label><input type="text" placeholder="Objeto..."></li>
+            </ul>
+        </div>
+
+        <div class="inventory-section">
+            <h4 style="margin: 0 0 5px 0; font-size: 14px;">Magia / Hechizos (7)</h4>
+            <ul class="inventory-list">
+                <li><label>Hech. 1</label><input type="text"></li>
+                <li><label>Hech. 2</label><input type="text"></li>
+                <li><label>Hech. 3</label><input type="text"></li>
+                <li><label>Hech. 4</label><input type="text"></li>
+                <li><label>Hech. 5</label><input type="text"></li>
+                <li><label>Hech. 6</label><input type="text"></li>
+                <li><label>Hech. 7</label><input type="text"></li>
+            </ul>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    let modoJuego = false;
+    let puntosInicialesDisp = 15;
+    let nivelPersonaje = 1;
+    let puntosMejoraDisp = 0;
+
+    const stats = [
+        { id: 'vitalidad', nombre: 'VITALIDAD', base: 20, ptsIniciales: 0, mult: 5, ptsMejora: 0 },
+        { id: 'velocidad', nombre: 'VELOCIDAD', base: 1, ptsIniciales: 0, mult: 1, ptsMejora: 0 },
+        { id: 'ataque', nombre: 'ATAQUE', base: 1, ptsIniciales: 0, mult: 1, ptsMejora: 0 },
+        { id: 'defensa', nombre: 'DEFENSA', base: 1, ptsIniciales: 0, mult: 1, ptsMejora: 0 },
+        { id: 'ataque_magico', nombre: 'ATAQ. MÁG.', base: 1, ptsIniciales: 0, mult: 1, ptsMejora: 0 },
+        { id: 'defensa_magica', nombre: 'DEF. MÁG.', base: 1, ptsIniciales: 0, mult: 1, ptsMejora: 0 },
+        { id: 'inteligencia', nombre: 'INTELIGENCIA', base: 1, ptsIniciales: 0, mult: 1, ptsMejora: 0 },
+        { id: 'destreza', nombre: 'DESTREZA', base: 1, ptsIniciales: 0, mult: 1, ptsMejora: 0 }
+    ];
+
+    function calcularNivelFinal(stat) {
+        // La vitalidad escala automáticamente con el Nivel General
+        if (stat.id === 'vitalidad') {
+            return stat.base + ((nivelPersonaje - 1) * stat.mult);
+        }
+        // El resto usa la fórmula de puntos asignados
+        return (stat.base + stat.ptsIniciales) + (stat.mult * stat.ptsMejora);
+    }
+
+    function recalcularMultiplicadores() {
+        stats.forEach(stat => {
+            if (stat.id !== 'vitalidad') {
+                let nivelBaseYAsignado = stat.base + stat.ptsIniciales;
+                if (nivelBaseYAsignado <= 2) stat.mult = 1;
+                else if (nivelBaseYAsignado === 3) stat.mult = 2;
+                else if (nivelBaseYAsignado <= 5) stat.mult = 3;
+                else stat.mult = 4;
+            }
+        });
+    }
+
+    function renderizarTabla() {
+        const tbody = document.getElementById('tabla-stats');
+        tbody.innerHTML = '';
+
+        if (!modoJuego) recalcularMultiplicadores();
+
+        stats.forEach((stat, index) => {
+            const nivelFinal = calcularNivelFinal(stat);
+            let columnaInteractiva = '';
+            
+            if (stat.id === 'vitalidad') {
+                // Fila especial para Vitalidad (No se puede tocar manualmente)
+                columnaInteractiva = `<td><span class="text-muted">Automático por Nivel</span></td>`;
+            } else {
+                if (!modoJuego) {
+                    columnaInteractiva = `
+                        <td>
+                            <button class="btn btn-small" onclick="modificarPuntoInicial(${index}, -1)">-</button>
+                            <span style="display:inline-block; width:20px;">${stat.ptsIniciales}</span>
+                            <button class="btn btn-small" onclick="modificarPuntoInicial(${index}, 1)" ${puntosInicialesDisp === 0 ? 'disabled' : ''}>+</button>
+                        </td>`;
+                } else {
+                    columnaInteractiva = `
+                        <td>
+                            <button class="btn btn-small btn-upgrade" onclick="gastarPuntoMejora(${index})" ${puntosMejoraDisp === 0 ? 'disabled' : ''}>+ Mejorar</button>
+                            <span style="font-size: 12px; color: #7f8c8d; display: block; margin-top: 3px;">Puntos gastados: ${stat.ptsMejora}</span>
+                        </td>`;
+                }
+            }
+
+            tbody.innerHTML += `
+                <tr>
+                    <td><strong>${stat.nombre}</strong></td>
+                    <td style="font-size: 18px; font-weight: bold;">${nivelFinal}</td>
+                    ${columnaInteractiva}
+                    <td style="color: #8e44ad; font-weight: bold;">+${stat.mult}</td>
+                </tr>
+            `;
+        });
+
+        document.getElementById('puntos-iniciales').innerText = puntosInicialesDisp;
+        document.getElementById('btn-comenzar').disabled = puntosInicialesDisp > 0;
+        document.getElementById('nivel-general').innerText = nivelPersonaje;
+        document.getElementById('puntos-mejora').innerText = puntosMejoraDisp;
+
+        const vitalidadFinal = calcularNivelFinal(stats[0]);
+        document.getElementById('hp-max').innerText = vitalidadFinal;
+        document.getElementById('mana-max').innerText = vitalidadFinal;
+    }
+
+    function modificarPuntoInicial(index, valor) {
+        const stat = stats[index];
+        if (valor === -1 && stat.ptsIniciales > 0) {
+            stat.ptsIniciales -= 1;
+            puntosInicialesDisp += 1;
+        } else if (valor === 1 && puntosInicialesDisp > 0) {
+            stat.ptsIniciales += 1;
+            puntosInicialesDisp -= 1;
+        }
+        renderizarTabla();
+    }
+
+    function iniciarPartida() {
+        modoJuego = true;
+        document.getElementById('fase-creacion').classList.add('hidden');
+        document.getElementById('fase-juego').classList.remove('hidden');
+        document.getElementById('col-asignar').classList.add('hidden');
+        document.getElementById('col-mejora').classList.remove('hidden');
+
+        const vitalidadFinal = calcularNivelFinal(stats[0]);
+        document.getElementById('hp-actual').value = vitalidadFinal;
+        document.getElementById('mana-actual').value = vitalidadFinal;
+        
+        renderizarTabla();
+    }
+
+    function subirNivelGeneral() {
+        nivelPersonaje++;
+        puntosMejoraDisp++;
+        
+        // Sumar automáticamente los +5 a la vida y maná actual
+        const hpInput = document.getElementById('hp-actual');
+        const manaInput = document.getElementById('mana-actual');
+        hpInput.value = parseInt(hpInput.value) + stats[0].mult;
+        manaInput.value = parseInt(manaInput.value) + stats[0].mult;
+        
+        renderizarTabla();
+    }
+
+    function gastarPuntoMejora(index) {
+        if (puntosMejoraDisp > 0 && stats[index].id !== 'vitalidad') {
+            stats[index].ptsMejora++;
+            puntosMejoraDisp--;
+            renderizarTabla();
+        }
+    }
+
+    renderizarTabla();
+</script>
+
+</body>
+</html>
