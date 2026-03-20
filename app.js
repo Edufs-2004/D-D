@@ -286,7 +286,7 @@ function renderizarTabla() {
         
         let colInt = '';
         if (stat.id === 'vitalidad') { colInt = `<td><span class="text-muted">Auto</span></td>`; } 
-        else if (!modoJuego) { colInt = `<td><button class="btn btn-blue btn-small" onclick="modificarPuntoInicial(${index}, -1)">-</button> <span style="display:inline-block; width:20px; font-weight:bold; text-align:center;">${stat.ptsIniciales}</span> <button class="btn btn-blue btn-small" onclick="modificarPuntoInicial(${index}, 1)" ${puntosInicialesDisp === 0 ? 'disabled' : ''}>+</button></td>`; } 
+        else if (!modoJuego) { colInt = `<td><div class="stat-control"><button class="btn btn-blue btn-small" onclick="modificarPuntoInicial(${index}, 1)" ${puntosInicialesDisp === 0 ? 'disabled' : ''}>+</button><span style="display:inline-block; width:20px; font-weight:bold; text-align:center;">${stat.ptsIniciales}</span><button class="btn btn-blue btn-small" onclick="modificarPuntoInicial(${index}, -1)">-</button></div></td>`; } 
         else { colInt = `<td><button class="btn btn-green btn-small" onclick="gastarPuntoMejora(${index})" ${puntosMejoraDisp === 0 ? 'disabled' : ''}>+ Mejorar</button><span style="font-size: 12px; color: #7f8c8d; display: block; margin-top: 3px;">Gastados: ${stat.ptsMejora}</span></td>`; }
         tbody.innerHTML += `<tr><td><strong>${stat.nombre}</strong></td><td style="font-size: 18px; font-weight: bold;">${textoNivel}</td>${colInt}<td style="color: #8e44ad; font-weight: bold;">+${stat.mult}</td></tr>`;
     });

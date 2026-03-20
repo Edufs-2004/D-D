@@ -2,48 +2,76 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel de Personaje D&D</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="app.js" defer></script>
     <style>
-        /* =========================================
+/* =========================================
            DISEÑO RESPONSIVE (PARA CELULARES)
            ========================================= */
         @media (max-width: 768px) {
-            /* Ajustamos el cuerpo y quitamos el margen superior fijo */
             body { padding: 10px; padding-top: 10px; }
             
-            /* La barra de guardado se apila y sus botones se expanden */
-            .char-manager-bar { position: relative; flex-direction: column; gap: 10px; padding: 15px; }
-            .char-manager-controls { flex-wrap: wrap; justify-content: center; width: 100%; }
-            .char-manager-controls button { flex-grow: 1; padding: 10px; }
-            #selector-personaje { width: 100%; }
+            /* Barra superior de guardado */
+            .char-manager-bar { position: relative; flex-direction: column; gap: 12px; padding: 12px; }
+            .char-manager-controls { flex-wrap: wrap; justify-content: center; width: 100%; gap: 8px; }
+            .char-manager-controls button { flex: 1 1 calc(50% - 4px); padding: 14px 10px; font-size: 15px; min-height: 48px; }
+            #selector-personaje { width: 100%; padding: 10px; font-size: 14px; height: 44px; }
 
-            /* El panel de identidad pasa a tener la foto arriba y los datos abajo */
+            /* Panel de identidad */
             .header-panel { flex-direction: column; align-items: center; padding: 15px; text-align: center; }
-            .char-image-box { width: 100%; max-width: 200px; }
+            .char-image-box { width: 100%; max-width: 150px; }
             .char-image-box img { width: 100%; height: auto; aspect-ratio: 1/1; }
+            .char-image-box input { padding: 10px; font-size: 14px; height: 40px; }
+            .char-name { font-size: 20px; }
             .detail-row.info-row { flex-direction: column; }
-            .info-row input { width: 100%; box-sizing: border-box; }
+            .info-row input { width: 100%; box-sizing: border-box; padding: 12px; font-size: 16px; height: 44px; }
+            #char-historia { padding: 12px; font-size: 16px; height: 120px; }
 
-            /* LA MAGIA: Pasamos de 2 columnas a 1 sola columna */
+            /* 1 Sola Columna */
             .grid-container { grid-template-columns: 1fr; gap: 15px; }
+
+            /* --- ARREGLO DE LA TABLA Y ATRIBUTOS --- */
+            .panel { overflow-x: auto; padding: 15px; } /* Evita que la tabla rompa la pantalla */
+            .controls-box { flex-direction: column; gap: 12px; text-align: center; align-items: center; } /* Apila los botones de puntos */
+            .controls-box button { width: 100%; padding: 14px; font-size: 16px; min-height: 48px; }
+            .controls-box span { font-size: 16px; }
+            table { font-size: 14px; } /* Achica la letra de la tabla */
+            th, td { padding: 10px 4px; } /* Quita el relleno innecesario */
+            .btn-small { padding: 10px 12px; font-size: 16px; margin: 4px 2px; min-height: 44px; min-width: 44px; } /* Botones más fáciles de tocar */
+            .btn { min-height: 44px; }
+            .stat-control { flex-direction: column; gap: 6px; }
+            .stat-control button { width: 100%; }
 
             /* Vida y Maná apilados */
             .status-box { flex-direction: column; gap: 15px; }
+            .status-item { padding: 18px; }
+            .mod-controls { flex-wrap: wrap; gap: 8px; }
+            .mod-controls button { flex: 1 1 calc(50% - 4px); padding: 12px; min-height: 48px; }
+            .mod-controls input { height: 44px; font-size: 18px; }
 
-            /* Hacemos el inventario y autocompletado amigables para los dedos */
-            .inventory-list li { flex-wrap: wrap; gap: 5px; padding-bottom: 10px; border-bottom: 1px solid #eee; }
-            .autocomplete-wrapper { width: 100%; }
-            .swap-select { flex-grow: 1; height: 38px; font-size: 14px; }
-            .btn-icon { width: 45px; height: 38px; font-size: 18px; }
-            .inventory-list input { height: 38px; box-sizing: border-box; }
+            /* Inventario amigable para dedos */
+            .inventory-list li { flex-wrap: wrap; gap: 8px; padding-bottom: 15px; border-bottom: 1px solid #eee; align-items: center; }
+            .inventory-list label { min-width: 60px; }
+            .autocomplete-wrapper { width: 100%; min-height: 44px; flex-grow: 1; }
+            .autocomplete-wrapper input { min-height: 44px; font-size: 16px; }
+            .swap-select { flex-grow: 1; height: 44px; font-size: 14px; min-width: 100px; padding: 8px; }
+            .btn-icon { width: 48px; height: 48px; font-size: 18px; padding: 8px; min-width: 48px; }
+            .inventory-list input { height: 44px; box-sizing: border-box; font-size: 16px; }
             
             /* Efectos adaptados */
-            .mod-row { flex-wrap: wrap; padding-left: 0; }
-            .efecto-header { flex-wrap: wrap; }
-            .efecto-header input[type="text"] { width: 100%; margin-top: 5px; }
+            .mod-row { flex-wrap: wrap; padding-left: 15px; gap: 8px; }
+            .efecto-header { flex-wrap: wrap; gap: 10px; }
+            .efecto-header input[type="text"] { width: calc(100% - 50px); font-size: 16px; padding: 10px; }
+            .efecto-header input[type="checkbox"] { margin: 0; }
+            
+            /* Nivel General Badge */
+            .level-badge { font-size: 16px; padding: 12px 20px; }
+            
+            /* Mejor espaciado general */
+            h4 { margin: 15px 0 10px 0; font-size: 15px; }
         }
     </style>
 </head>
@@ -124,9 +152,9 @@
                 <div class="status-header"><span>VIDA</span><span id="hp-text-display" class="hp-text">20 / 20</span></div>
                 <div class="bar-bg"><div id="hp-bar" class="bar-fill hp-fill" style="width: 100%;"></div></div>
                 <div class="mod-controls">
-                    <button class="btn btn-small btn-red" onclick="modificarBarra('hp', -1)">- Daño</button>
-                    <input type="number" id="hp-input" value="1" min="1">
                     <button class="btn btn-small btn-green" onclick="modificarBarra('hp', 1)">+ Curar</button>
+                    <input type="number" id="hp-input" value="1" min="1">
+                    <button class="btn btn-small btn-red" onclick="modificarBarra('hp', -1)">- Daño</button>
                 </div>
             </div>
 
@@ -134,9 +162,9 @@
                 <div class="status-header"><span>MANÁ</span><span id="mana-text-display" class="mana-text">20 / 20</span></div>
                 <div class="bar-bg"><div id="mana-bar" class="bar-fill mana-fill" style="width: 100%;"></div></div>
                 <div class="mod-controls">
-                    <button class="btn btn-small btn-red" onclick="modificarBarra('mana', -1)">- Gastar</button>
-                    <input type="number" id="mana-input" value="1" min="1">
                     <button class="btn btn-small btn-blue" onclick="modificarBarra('mana', 1)">+ Recup.</button>
+                    <input type="number" id="mana-input" value="1" min="1">
+                    <button class="btn btn-small btn-red" onclick="modificarBarra('mana', -1)">- Gastar</button>
                 </div>
             </div>
         </div>
