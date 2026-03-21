@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Portal D&D</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            margin: 0; 
+            min-height: 100vh; 
+            background-color: #2c3e50; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            padding: 20px; 
+            background-image: radial-gradient(circle at center, #34495e 0%, #2c3e50 100%); 
+        }
+        .login-card { 
+            background: white; 
+            padding: 40px; 
+            border-radius: 12px; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.4); 
+            width: 100%; 
+            max-width: 380px; 
+        }
+        .login-card h2 { 
+            text-align: center; 
+            margin-top: 0; 
+            margin-bottom: 5px; 
+            font-size: 2.2rem; 
+            color: #2c3e50; 
+        }
+        .subtitle { 
+            text-align: center; 
+            color: #7f8c8d; 
+            margin-bottom: 25px; 
+        }
+        .login-form { 
+            display: flex; 
+            flex-direction: column; 
+        }
+        .login-form label { 
+            font-weight: bold; 
+            color: #2c3e50; 
+            font-size: 14px; 
+            margin-bottom: 5px;
+            margin-top: 15px;
+        }
+        .login-form input { 
+            padding: 12px; 
+            border: 2px solid #ecf0f1; 
+            border-radius: 6px; 
+            font-size: 15px; 
+            outline: none; 
+            transition: border 0.3s; 
+            background-color: #fafafa; 
+        }
+        .login-form input:focus { 
+            border-color: #3498db; 
+            background-color: #fff; 
+        }
+        .btn { 
+            padding: 12px; 
+            cursor: pointer; 
+            border: none; 
+            border-radius: 6px; 
+            color: white; 
+            font-weight: bold; 
+            font-size: 16px;
+            transition: 0.2s; 
+            margin-top: 25px;
+        }
+        .btn-blue { background-color: #3498db; }
+        .btn-blue:hover { background-color: #2980b9; }
+        .register-link {
+            text-align: center; 
+            margin-top: 20px; 
+            font-size: 14px; 
+            color: #7f8c8d;
+        }
+        .register-link a {
+            color: #3498db; 
+            font-weight: bold;
+            text-decoration: none;
+        }
+        .register-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-card">
+        <h2>🐉 Portal D&D</h2>
+        <p class="subtitle">Inicia sesión para continuar tu aventura</p>
+        
+        <div class="login-form">
+            <label for="login-email">Correo Electrónico</label>
+            <input type="email" id="login-email" placeholder="ejemplo@correo.com">
+            
+            <label for="login-password">Contraseña</label>
+            <input type="password" id="login-password" placeholder="••••••••">
+            
+            <button class="btn btn-blue" onclick="simularLogin()">Entrar al Portal</button>
+            
+            <div class="register-link">
+                ¿No tienes cuenta? <a href="#" onclick="alert('En el próximo paso, esto registrará tu correo en Supabase.')">Regístrate aquí</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Lógica de transición visual temporal
+        function simularLogin() {
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+
+            if(email === "" || password === "") {
+                alert("Por favor, ingresa un correo y contraseña para probar.");
+                return;
+            }
+
+            // REDIRECCIÓN FÍSICA A TU ARCHIVO PRINCIPAL
+            window.location.href = "index.html";
+        }
+    </script>
+</body>
+</html>
