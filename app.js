@@ -324,10 +324,26 @@ function iniciarPartida() {
 function subirNivelGeneral() { nivelPersonaje++; puntosMejoraDisp++; renderizarTabla(); }
 function gastarPuntoMejora(i) { if (puntosMejoraDisp > 0 && stats[i].id !== 'vitalidad') { stats[i].ptsMejora++; puntosMejoraDisp--; renderizarTabla(); } }
 
-// --- ARRANQUE SEGURO ---
-window.addEventListener('DOMContentLoaded', () => {
+// --- ARRANQUE SEGURO Y GUARDIA DE RUTAS ---
+window.addEventListener('DOMContentLoaded', async () => {
+    
+    // 1. EL GUARDIA DE SEGURIDAD
+    // Verificamos si hay una sesión activa en Supabase
+    const { data: { session } } = await window.db.auth.getSession();
+    
+    if (!session) {
+        // Si no hay sesión, lo pateamos a la pantalla de login inmediatamente
+        console.warn("Acceso denegado: No hay sesión activa.");
+        window.location.href = "login.html";
+        return; // Detenemos la ejecución del resto del código
+    }
+
+    // 2. SI HAY SESIÓN, CARGAMOS EL JUEGO
+    console.log("Acceso concedido. Cargando el portal...");
+    
     inicializarStatsBase();
     renderizarLobby(); 
+    
     activarAutocompletado("eq-armadura", ["armadura"], true);
     activarAutocompletado("eq-mano1", ["arma", "escudo"], true);
     activarAutocompletado("eq-mano2", ["arma", "escudo"], true);
