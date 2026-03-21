@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hoja de Personaje - Portal D&D</title>
+    <link rel="stylesheet" href="style.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase.js"></script>
+    <script src="app.js" defer></script>
+</head>
+<body>
+
+<div id="pantalla-personaje">
+    
+    <div class="char-manager-bar">
+        <div>
+            <button class="btn" style="background: transparent; border: 1px solid white;" onclick="volverAlLobby()">🔙 Volver al Portal</button>
+            <strong style="margin-left: 15px;" id="nav-char-name">Personaje Sin Nombre</strong> 
+        </div>
+        <div class="char-manager-controls">
+            <button class="btn btn-green" onclick="guardarPersonaje()">💾 Guardar</button>
+            <button class="btn btn-red" onclick="borrarPersonaje()">🗑️ Borrar</button>
+        </div>
+    </div>
+
+    <div class="header-panel">
+        <div class="char-image-box">
+            <img id="char-img-display" src="https://via.placeholder.com/150?text=Retrato" alt="Personaje">
+            <input type="text" id="char-img-url" placeholder="URL imagen..." onchange="actualizarImagen()">
+        </div>
+        <div class="char-details">
+            <div class="detail-row"><input type="text" id="char-nombre" class="char-name" placeholder="Nombre del Personaje"></div>
+            <div class="detail-row info-row">
+                <input type="text" id="char-sexo" placeholder="Sexo/Género">
+                <input type="number" id="char-edad" placeholder="Edad">
+                <input type="text" id="char-clase" placeholder="Clase / Profesión">
+            </div>
+            <div class="detail-row"><textarea id="char-historia" placeholder="Escribe aquí la historia de fondo..."></textarea></div>
+        </div>
+    </div>
+
+    <div class="grid-container">
+        <div class="panel">
+            <h2>Atributos y Niveles</h2>
+            
+            <div class="controls-box" id="fase-creacion">
+                <span style="font-weight: bold; font-size: 16px;">Puntos Iniciales: <span id="puntos-iniciales" class="text-green">15</span></span>
+                <button class="btn btn-blue" id="btn-comenzar" onclick="iniciarPartida()" disabled>Terminar Creación</button>
+            </div>
+
+            <div class="controls-box hidden" id="fase-juego">
+                <div class="level-badge">Nivel General: <span id="nivel-general">1</span></div>
+                <div>
+                    <span style="font-weight: bold; margin-right: 15px;">Puntos de Mejora: <span id="puntos-mejora" class="text-green">0</span></span>
+                    <button class="btn btn-green" onclick="subirNivelGeneral()">+ Subir Nivel</button>
+                </div>
+            </div>
+
+            <table>
+                <thead>
+                    <tr><th>Stat</th><th>Nivel Final</th><th id="col-asignar">Asignar Inicial</th><th>Mult. Fijo</th><th class="hidden" id="col-mejora">Usar Mejora</th></tr>
+                </thead>
+                <tbody id="tabla-stats"></tbody>
+            </table>
+            <p style="font-size: 11px; color: #7f8c8d; margin-top: 5px;">* Modificadores: <span style="color: #2980b9; font-weight: bold;">Equipo</span> | <span style="color: #8e44ad; font-weight: bold;">Efectos</span></p>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; border-bottom: 2px solid #3498db; padding-bottom: 5px; margin-bottom: 10px;">
+                <h3 style="border: none; margin: 0; padding: 0;">Efectos Activos</h3>
+                <button class="btn btn-small btn-blue" onclick="agregarEfecto()">+ Añadir Efecto</button>
+            </div>
+            <div id="contenedor-efectos"></div>
+        </div>
+
+        <div class="panel">
+            <h2>Estado Actual</h2>
+            
+            <div class="status-box">
+                <div class="status-item">
+                    <div class="status-header"><span>VIDA</span><span id="hp-text-display" class="hp-text">20 / 20</span></div>
+                    <div class="bar-bg"><div id="hp-bar" class="bar-fill hp-fill" style="width: 100%;"></div></div>
+                    <div class="mod-controls">
+                        <button class="btn btn-small btn-red" onclick="modificarBarra('hp', -1)">- Daño</button>
+                        <input type="number" id="hp-input" value="1" min="1">
+                        <button class="btn btn-small btn-green" onclick="modificarBarra('hp', 1)">+ Curar</button>
+                    </div>
+                </div>
+
+                <div class="status-item">
+                    <div class="status-header"><span>MANÁ</span><span id="mana-text-display" class="mana-text">20 / 20</span></div>
+                    <div class="bar-bg"><div id="mana-bar" class="bar-fill mana-fill" style="width: 100%;"></div></div>
+                    <div class="mod-controls">
+                        <button class="btn btn-small btn-red" onclick="modificarBarra('mana', -1)">- Gastar</button>
+                        <input type="number" id="mana-input" value="1" min="1">
+                        <button class="btn btn-small btn-blue" onclick="modificarBarra('mana', 1)">+ Recup.</button>
+                    </div>
+                </div>
+            </div>
+
+            <h3>Equipamiento</h3>
+            
+            <div class="inventory-section">
+                <h4 style="margin: 0 0 5px 0; font-size: 14px;">Defensa Activa</h4>
+                <ul class="inventory-list">
+                    <li><label>Pecho</label><div class="autocomplete-wrapper"><input type="text" id="eq-armadura" autocomplete="off"></div><button class="btn btn-icon btn-red" onclick="desequipar('eq-armadura')">↓</button></li>
+                </ul>
+            </div>
+
+            <div class="inventory-section">
+                <h4 style="margin: 0 0 5px 0; font-size: 14px;">Manos Activas</h4>
+                <ul class="inventory-list">
+                    <li><label>Mano 1</label><div class="autocomplete-wrapper"><input type="text" id="eq-mano1" autocomplete="off"></div><button class="btn btn-icon btn-red" onclick="desequipar('eq-mano1')">↓</button></li>
+                    <li><label>Mano 2</label><div class="autocomplete-wrapper"><input type="text" id="eq-mano2" autocomplete="off"></div><button class="btn btn-icon btn-red" onclick="desequipar('eq-mano2')">↓</button></li>
+                </ul>
+            </div>
+
+            <div class="inventory-section">
+                <h4 style="margin: 0 0 5px 0; font-size: 14px;">Mochila</h4>
+                <ul class="inventory-list">
+                    <li><label>Slot 1</label><div class="autocomplete-wrapper"><input type="text" id="inv-1" autocomplete="off"></div><select id="target-1" class="swap-select"><option value="eq-mano1">Mano 1</option><option value="eq-mano2">Mano 2</option><option value="eq-armadura">Pecho</option></select><button class="btn btn-icon btn-green" onclick="intercambiar(1)">🔄</button></li>
+                    <li><label>Slot 2</label><div class="autocomplete-wrapper"><input type="text" id="inv-2" autocomplete="off"></div><select id="target-2" class="swap-select"><option value="eq-mano1">Mano 1</option><option value="eq-mano2">Mano 2</option><option value="eq-armadura">Pecho</option></select><button class="btn btn-icon btn-green" onclick="intercambiar(2)">🔄</button></li>
+                    <li><label>Slot 3</label><div class="autocomplete-wrapper"><input type="text" id="inv-3" autocomplete="off"></div><select id="target-3" class="swap-select"><option value="eq-mano1">Mano 1</option><option value="eq-mano2">Mano 2</option><option value="eq-armadura">Pecho</option></select><button class="btn btn-icon btn-green" onclick="intercambiar(3)">🔄</button></li>
+                    <li><label>Slot 4</label><div class="autocomplete-wrapper"><input type="text" id="inv-4" autocomplete="off"></div><select id="target-4" class="swap-select"><option value="eq-mano1">Mano 1</option><option value="eq-mano2">Mano 2</option><option value="eq-armadura">Pecho</option></select><button class="btn btn-icon btn-green" onclick="intercambiar(4)">🔄</button></li>
+                    <li><label>Slot 5</label><div class="autocomplete-wrapper"><input type="text" id="inv-5" autocomplete="off"></div><select id="target-5" class="swap-select"><option value="eq-mano1">Mano 1</option><option value="eq-mano2">Mano 2</option><option value="eq-armadura">Pecho</option></select><button class="btn btn-icon btn-green" onclick="intercambiar(5)">🔄</button></li>
+                </ul>
+            </div>
+            
+            <div class="inventory-section">
+                <h4 style="margin: 0 0 5px 0; font-size: 14px;">Magia / Hechizos</h4>
+                <ul class="inventory-list">
+                    <li><label>Hech. 1</label><input type="text"></li>
+                    <li><label>Hech. 2</label><input type="text"></li>
+                    <li><label>Hech. 3</label><input type="text"></li>
+                    <li><label>Hech. 4</label><input type="text"></li>
+                    <li><label>Hech. 5</label><input type="text"></li>
+                    <li><label>Hech. 6</label><input type="text"></li>
+                    <li><label>Hech. 7</label><input type="text"></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

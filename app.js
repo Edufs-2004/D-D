@@ -10,6 +10,7 @@ let baseDatosItems = [
 ];
 
 let idPersonajeActual = null;
+let historiaIdActual = null; // NUEVO: Para saber a qué historia pertenece el personaje
 let modoJuego = false;
 let puntosInicialesDisp = 15;
 let nivelPersonaje = 1;
@@ -34,56 +35,47 @@ function inicializarStatsBase() {
 }
 
 // =========================================
-// SISTEMA DE GUARDADO EN LA NUBE (SUPABASE)
+// SISTEMA DE GUARDADO EN LA NUBE (SUPABASE REAL)
 // =========================================
 
-async function cargarListaPersonajes() {
-    const selector = document.getElementById('selector-personaje');
+async function renderizarLobby() {
     const listaLobby = document.getElementById('lista-personajes-lobby');
-    
-    selector.innerHTML = '<option value="">-- Crear Nuevo --</option>';
-    listaLobby.innerHTML = '<p class="text-muted text-center" style="margin: 20px 0;">Cargando desde la nube...</p>';
+    listaLobby.innerHTML = '<p style="text-align:center;">Conectando con el servidor...</p>';
 
-    // 1. Obtener quién soy yo
     const { data: { user } } = await window.db.auth.getUser();
     if (!user) return;
 
-    // 2. Pedirle a Supabase MIS personajes
+    // Pedimos TODOS los personajes de este usuario a la Nube
     const { data: personajesGuardados, error } = await window.db
         .from('personajes')
         .select('*')
         .eq('user_id', user.id);
 
     if (error) {
-        console.error("Error al cargar personajes:", error);
-        listaLobby.innerHTML = '<p style="color:red; text-align:center;">Error al cargar personajes.</p>';
+        listaLobby.innerHTML = '<p style="color:red; text-align:center;">Error de conexión.</p>';
         return;
     }
 
-    listaLobby.innerHTML = ''; // Limpiamos el texto de "Cargando..."
+    listaLobby.innerHTML = '';
 
     if (personajesGuardados.length === 0) {
-        listaLobby.innerHTML = '<p class="text-muted text-center" style="margin: 20px 0;">No tienes personajes en la nube.</p>';
+        listaLobby.innerHTML = '<p style="text-align:center; color:#7f8c8d;">No estás en ninguna historia aún.</p>';
         return;
     }
 
-    // 3. Pintarlos en el Lobby y en el menú desplegable
-    personajesGuardados.forEach(p => {
-        // Al selector de la hoja
-        const opt = document.createElement('option');
-        opt.value = p.id;
-        opt.innerText = p.identidad.nombre || "Personaje Sin Nombre";
-        if (p.id === idPersonajeActual) opt.selected = true;
-        selector.appendChild(opt);
+    // LÓGICA DE AGRUPACIÓN (Tu idea de Arquitecto)
+    // Por ahora, todos irán a "Personajes Libres" porque historia_id es null.
+    listaLobby.innerHTML += `<h4 style="margin:5px 0; color:#7f8c8d;">Personajes Libres (Sin Campaña)</h4>`;
 
-        // A las tarjetas del Lobby
+    personajesGuardados.forEach(p => {
         const img = p.identidad.imgUrl || 'https://via.placeholder.com/50?text=?';
         const clase = p.identidad.clase || 'Aventurero';
+        
         listaLobby.innerHTML += `
             <div class="char-item" onclick="entrarAlPersonaje('${p.id}')">
                 <img src="${img}" alt="avatar">
                 <div class="char-info">
-                    <h4>${p.identidad.nombre}</h4>
+                    <h4>${p.identidad.nombre || "Desconocido"}</h4>
                     <p>Nivel ${p.progreso.nivelPersonaje} | ${clase}</p>
                 </div>
             </div>
@@ -93,23 +85,18 @@ async function cargarListaPersonajes() {
 
 async function guardarPersonaje() {
     const nombreStr = document.getElementById('char-nombre').value.trim();
-    if (!nombreStr) { alert("¡Ponle un nombre a tu personaje antes de guardarlo!"); return; }
-
-    const btnGuardar = document.querySelector('.char-manager-controls .btn-green');
-    btnGuardar.innerText = "⏳ Guardando...";
-    btnGuardar.disabled = true;
+    if (!nombreStr) { alert("¡Ponle un nombre a tu personaje!"); return; }
 
     const { data: { user } } = await window.db.auth.getUser();
 
-    // Recolectar Inventario de Mochila
     let mochilaArray = [];
     for(let i=1; i<=5; i++) {
         mochilaArray.push({ val: document.getElementById(`inv-${i}`).value, id: document.getElementById(`inv-${i}`).dataset.itemId || "" });
     }
 
     const payload = {
-        user_id: user.id, // Dueño del personaje
-        historia_id: null, // Por ahora están sueltos (sin campaña)
+        user_id: user.id,
+        historia_id: historiaIdActual, // Estará atado a una historia si entraste por código
         identidad: { nombre: nombreStr, imgUrl: document.getElementById('char-img-url').value, sexo: document.getElementById('char-sexo').value, edad: document.getElementById('char-edad').value, clase: document.getElementById('char-clase').value, historia: document.getElementById('char-historia').value },
         progreso: { modoJuego: modoJuego, puntosInicialesDisp: puntosInicialesDisp, nivelPersonaje: nivelPersonaje, puntosMejoraDisp: puntosMejoraDisp, hpActual: hpActual, manaActual: manaActual },
         stats_array: stats,
@@ -124,47 +111,37 @@ async function guardarPersonaje() {
 
     let errorSupabase = null;
 
+    // GUARDAR EN SUPABASE
     if (!idPersonajeActual) {
-        // ES NUEVO -> Insertar
         const { data, error } = await window.db.from('personajes').insert([payload]).select();
         errorSupabase = error;
         if(data && data.length > 0) idPersonajeActual = data[0].id;
     } else {
-        // YA EXISTE -> Actualizar
         const { error } = await window.db.from('personajes').update(payload).eq('id', idPersonajeActual);
         errorSupabase = error;
     }
 
     if (errorSupabase) {
-        console.error("Error al guardar:", errorSupabase);
-        alert("Hubo un error al guardar en la nube.");
+        alert("Error al guardar en la nube.");
+        console.error(errorSupabase);
     } else {
         document.getElementById('nav-char-name').innerText = nombreStr;
-        cargarListaPersonajes(); // Refrescar listas
+        alert("¡Personaje Guardado en Supabase!");
     }
-
-    btnGuardar.innerText = "💾 Guardar";
-    btnGuardar.disabled = false;
 }
 
-async function cargarPersonajeSeleccionado(idSeleccionadoLocal = null) {
-    // Si viene desde el Lobby usa el idSeleccionadoLocal, si viene del menú usa el valor del select
-    const idSeleccionado = idSeleccionadoLocal || document.getElementById('selector-personaje').value;
-    
-    if (!idSeleccionado) { nuevoPersonaje(); return; }
+async function cargarPersonajeSeleccionado(idSeleccionado) {
+    if (!idSeleccionado) return;
 
+    // DESCARGAR DESDE SUPABASE
     const { data, error } = await window.db.from('personajes').select('*').eq('id', idSeleccionado).single();
     
-    if (error || !data) {
-        console.error("Error al descargar personaje:", error);
-        alert("No se pudo descargar el personaje desde la nube.");
-        return;
-    }
+    if (error || !data) { alert("Error al cargar de la nube."); return; }
 
     idPersonajeActual = data.id;
+    historiaIdActual = data.historia_id;
     document.getElementById('nav-char-name').innerText = data.identidad.nombre;
 
-    // Desempaquetar datos en pantalla
     document.getElementById('char-nombre').value = data.identidad.nombre;
     document.getElementById('char-img-url').value = data.identidad.imgUrl;
     document.getElementById('char-sexo').value = data.identidad.sexo;
@@ -178,8 +155,7 @@ async function cargarPersonajeSeleccionado(idSeleccionadoLocal = null) {
     if (modoJuego) { document.getElementById('fase-creacion').classList.add('hidden'); document.getElementById('fase-juego').classList.remove('hidden'); document.getElementById('col-asignar').classList.add('hidden'); document.getElementById('col-mejora').classList.remove('hidden'); } 
     else { document.getElementById('fase-creacion').classList.remove('hidden'); document.getElementById('fase-juego').classList.add('hidden'); document.getElementById('col-asignar').classList.remove('hidden'); document.getElementById('col-mejora').classList.add('hidden'); }
 
-    stats = data.stats_array; 
-    efectosPersonaje = data.efectos_array || [];
+    stats = data.stats_array; efectosPersonaje = data.efectos_array || [];
 
     const eqIds = ['eq-armadura', 'eq-mano1', 'eq-mano2'];
     const eqData = [data.inventario.eqArmadura, data.inventario.eqMano1, data.inventario.eqMano2];
@@ -192,6 +168,7 @@ async function cargarPersonajeSeleccionado(idSeleccionadoLocal = null) {
 
 function nuevoPersonaje() {
     idPersonajeActual = null;
+    historiaIdActual = null;
     document.getElementById('nav-char-name').innerText = "Personaje Nuevo";
     
     ['char-nombre', 'char-img-url', 'char-sexo', 'char-edad', 'char-clase', 'char-historia'].forEach(id => document.getElementById(id).value = "");
@@ -209,42 +186,36 @@ function nuevoPersonaje() {
 
 async function borrarPersonaje() {
     if (!idPersonajeActual) return;
-    if (confirm("¿Estás seguro de borrar este personaje permanentemente de la nube?")) {
+    if (confirm("¿Borrar personaje de Supabase permanentemente?")) {
         const { error } = await window.db.from('personajes').delete().eq('id', idPersonajeActual);
-        if(!error){
-            volverAlLobby();
-        } else {
-            alert("Error al borrar en la nube.");
-            console.error(error);
-        }
+        if(!error) volverAlLobby();
+        else alert("Error al borrar en la nube.");
     }
 }
 
 // =========================================
-// NAVEGACIÓN Y EXTRAS
+// NAVEGACIÓN
 // =========================================
 function crearNuevoPersonajeLobby() { nuevoPersonaje(); document.getElementById('pantalla-lobby').classList.add('hidden'); document.getElementById('pantalla-personaje').classList.remove('hidden'); }
 function entrarAlPersonaje(id) { cargarPersonajeSeleccionado(id); document.getElementById('pantalla-lobby').classList.add('hidden'); document.getElementById('pantalla-personaje').classList.remove('hidden'); }
-async function volverAlLobby() { await renderizarLobby(); document.getElementById('pantalla-personaje').classList.add('hidden'); document.getElementById('pantalla-lobby').classList.remove('hidden'); }
 
-async function renderizarLobby() {
-    const lobby = document.getElementById('pantalla-lobby');
-    const personaje = document.getElementById('pantalla-personaje');
-    if (lobby && personaje) {
-        personaje.classList.add('hidden');
-        lobby.classList.remove('hidden');
-    }
-    await cargarListaPersonajes();
-    idPersonajeActual = null;
+async function volverAlLobby() { 
+    document.getElementById('pantalla-personaje').classList.add('hidden'); 
+    document.getElementById('pantalla-lobby').classList.remove('hidden'); 
+    await renderizarLobby();
 }
 
 async function cerrarSesion() {
-    try {
-        await window.db.auth.signOut();
-    } catch (error) {
-        console.error('Error en cierre de sesión:', error);
-    }
+    await window.db.auth.signOut();
     window.location.href = 'login.html';
+}
+
+function unirseAHistoriaPrompt() {
+    // ESTA ES LA FUNCIÓN DEL FUTURO (Paso 3)
+    const codigo = prompt("Ingresa el código secreto de la historia del DM:");
+    if(codigo) {
+        alert("Buscando en Supabase la historia con código: " + codigo + "\n(Lo programaremos en el siguiente paso)");
+    }
 }
 
 // =========================================
@@ -365,24 +336,39 @@ function iniciarPartida() { modoJuego = true; document.getElementById('fase-crea
 function subirNivelGeneral() { nivelPersonaje++; puntosMejoraDisp++; renderizarTabla(); }
 function gastarPuntoMejora(i) { if (puntosMejoraDisp > 0 && stats[i].id !== 'vitalidad') { stats[i].ptsMejora++; puntosMejoraDisp--; renderizarTabla(); } }
 
-// --- ARRANQUE SEGURO Y GUARDIA DE RUTAS ---
+// =========================================
+// NAVEGACIÓN Y ARRANQUE SEGURO DE LA HOJA
+// =========================================
+
+function volverAlLobby() {
+    window.location.href = "index.html"; // Regreso físico
+}
+
 window.addEventListener('DOMContentLoaded', async () => {
     
-    // 1. EL GUARDIA DE SEGURIDAD MIRA LA NUBE
+    // 1. EL GUARDIA DE SEGURIDAD
     const { data: { session } } = await window.db.auth.getSession();
-    
     if (!session) {
-        console.warn("Acceso denegado: No hay sesión activa.");
         window.location.href = "login.html";
         return; 
     }
 
-    console.log("Acceso concedido. Usuario:", session.user.email);
-    
-    // 2. INICIALIZAMOS
     inicializarStatsBase();
-    renderizarLobby(); // <-- AHORA CARGA DESDE LA NUBE
+
+    // 2. LA MAGIA DE LA URL: Revisamos si llegamos aquí haciendo clic en un personaje
+    // Ejemplo: personaje.html?id=12345-abcde
+    const urlParams = new URLSearchParams(window.location.search);
+    const charId = urlParams.get('id');
+
+    if (charId) {
+        // Si hay ID en la URL, lo descargamos de Supabase
+        await cargarPersonajeSeleccionado(charId);
+    } else {
+        // Si no hay ID, es que le diste a "Crear Nuevo"
+        nuevoPersonaje();
+    }
     
+    // Activar buscadores de items
     activarAutocompletado("eq-armadura", ["armadura"], true);
     activarAutocompletado("eq-mano1", ["arma", "escudo"], true);
     activarAutocompletado("eq-mano2", ["arma", "escudo"], true);
