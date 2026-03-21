@@ -1,16 +1,11 @@
 // =========================================
 // BASE DE DATOS Y ESTADO GLOBAL
 // =========================================
-let baseDatosItems = [
-    { id: 'arm_cuero', nombre: 'Armadura de Cuero', tipo: 'armadura', bonus: { defensa: 2 } },
-    { id: 'arm_malla', nombre: 'Cota de Malla', tipo: 'armadura', bonus: { defensa: 5, velocidad: -1 } },
-    { id: 'wpn_espada_larga', nombre: 'Espada Larga', tipo: 'arma', bonus: { ataque: 5, destreza: -1 } },
-    { id: 'shd_hierro', nombre: 'Escudo de Hierro', tipo: 'escudo', bonus: { defensa: 4, velocidad: -1 } },
-    { id: 'obj_pocion', nombre: 'Poción de Curación', tipo: 'objeto', bonus: null }
-];
+// ¡AQUÍ MATAMOS LA LISTA INTERNA! Ahora arranca vacía siempre.
+let baseDatosItems = []; 
 
 let idPersonajeActual = null;
-let historiaIdActual = null; // NUEVO: Para saber a qué historia pertenece el personaje
+let historiaIdActual = null;
 let modoJuego = false;
 let puntosInicialesDisp = 15;
 let nivelPersonaje = 1;
@@ -35,54 +30,8 @@ function inicializarStatsBase() {
 }
 
 // =========================================
-// SISTEMA DE GUARDADO EN LA NUBE (SUPABASE REAL)
+// SISTEMA DE GUARDADO EN LA NUBE (SUPABASE)
 // =========================================
-
-async function renderizarLobby() {
-    const listaLobby = document.getElementById('lista-personajes-lobby');
-    listaLobby.innerHTML = '<p style="text-align:center;">Conectando con el servidor...</p>';
-
-    const { data: { user } } = await window.db.auth.getUser();
-    if (!user) return;
-
-    // Pedimos TODOS los personajes de este usuario a la Nube
-    const { data: personajesGuardados, error } = await window.db
-        .from('personajes')
-        .select('*')
-        .eq('user_id', user.id);
-
-    if (error) {
-        listaLobby.innerHTML = '<p style="color:red; text-align:center;">Error de conexión.</p>';
-        return;
-    }
-
-    listaLobby.innerHTML = '';
-
-    if (personajesGuardados.length === 0) {
-        listaLobby.innerHTML = '<p style="text-align:center; color:#7f8c8d;">No estás en ninguna historia aún.</p>';
-        return;
-    }
-
-    // LÓGICA DE AGRUPACIÓN (Tu idea de Arquitecto)
-    // Por ahora, todos irán a "Personajes Libres" porque historia_id es null.
-    listaLobby.innerHTML += `<h4 style="margin:5px 0; color:#7f8c8d;">Personajes Libres (Sin Campaña)</h4>`;
-
-    personajesGuardados.forEach(p => {
-        const img = p.identidad.imgUrl || 'https://via.placeholder.com/50?text=?';
-        const clase = p.identidad.clase || 'Aventurero';
-        
-        listaLobby.innerHTML += `
-            <div class="char-item" onclick="entrarAlPersonaje('${p.id}')">
-                <img src="${img}" alt="avatar">
-                <div class="char-info">
-                    <h4>${p.identidad.nombre || "Desconocido"}</h4>
-                    <p>Nivel ${p.progreso.nivelPersonaje} | ${clase}</p>
-                </div>
-            </div>
-        `;
-    });
-}
-
 async function guardarPersonaje() {
     const nombreStr = document.getElementById('char-nombre').value.trim();
     if (!nombreStr) { alert("¡Ponle un nombre a tu personaje!"); return; }
@@ -96,7 +45,7 @@ async function guardarPersonaje() {
 
     const payload = {
         user_id: user.id,
-        historia_id: historiaIdActual, // Estará atado a una historia si entraste por código
+        historia_id: historiaIdActual, // Guardamos la conexión a la campaña
         identidad: { nombre: nombreStr, imgUrl: document.getElementById('char-img-url').value, sexo: document.getElementById('char-sexo').value, edad: document.getElementById('char-edad').value, clase: document.getElementById('char-clase').value, historia: document.getElementById('char-historia').value },
         progreso: { modoJuego: modoJuego, puntosInicialesDisp: puntosInicialesDisp, nivelPersonaje: nivelPersonaje, puntosMejoraDisp: puntosMejoraDisp, hpActual: hpActual, manaActual: manaActual },
         stats_array: stats,
@@ -111,7 +60,6 @@ async function guardarPersonaje() {
 
     let errorSupabase = null;
 
-    // GUARDAR EN SUPABASE
     if (!idPersonajeActual) {
         const { data, error } = await window.db.from('personajes').insert([payload]).select();
         errorSupabase = error;
@@ -133,7 +81,6 @@ async function guardarPersonaje() {
 async function cargarPersonajeSeleccionado(idSeleccionado) {
     if (!idSeleccionado) return;
 
-    // DESCARGAR DESDE SUPABASE
     const { data, error } = await window.db.from('personajes').select('*').eq('id', idSeleccionado).single();
     
     if (error || !data) { alert("Error al cargar de la nube."); return; }
@@ -194,28 +141,30 @@ async function borrarPersonaje() {
 }
 
 // =========================================
-// NAVEGACIÓN
+// CONEXIÓN CON EL DUNGEON MASTER (EL BOTÍN)
 // =========================================
-function crearNuevoPersonajeLobby() { nuevoPersonaje(); document.getElementById('pantalla-lobby').classList.add('hidden'); document.getElementById('pantalla-personaje').classList.remove('hidden'); }
-function entrarAlPersonaje(id) { cargarPersonajeSeleccionado(id); document.getElementById('pantalla-lobby').classList.add('hidden'); document.getElementById('pantalla-personaje').classList.remove('hidden'); }
+async function cargarItemsDeLaCampana() {
+    baseDatosItems = []; // Siempre vaciamos la mochila virtual al cargar
 
-async function volverAlLobby() { 
-    document.getElementById('pantalla-personaje').classList.add('hidden'); 
-    document.getElementById('pantalla-lobby').classList.remove('hidden'); 
-    await renderizarLobby();
-}
+    if (!historiaIdActual) return; 
 
-async function cerrarSesion() {
-    await window.db.auth.signOut();
-    window.location.href = 'login.html';
-}
+    // Le pedimos a Supabase los ítems exclusivos de esta historia
+    const { data: itemsDM, error } = await window.db
+        .from('items')
+        .select('*')
+        .eq('historia_id', historiaIdActual);
 
-function unirseAHistoriaPrompt() {
-    // ESTA ES LA FUNCIÓN DEL FUTURO (Paso 3)
-    const codigo = prompt("Ingresa el código secreto de la historia del DM:");
-    if(codigo) {
-        alert("Buscando en Supabase la historia con código: " + codigo + "\n(Lo programaremos en el siguiente paso)");
-    }
+    if (error || !itemsDM) return;
+
+    // Llenamos la base de datos que usa el autocompletado
+    itemsDM.forEach(item => {
+        baseDatosItems.push({
+            id: item.id,
+            nombre: `✨ ${item.nombre}`, // Ítems del DM llevan estrellas
+            tipo: item.tipo,
+            bonus: item.bonus // Como Supabase guarda JSON, esto pasa directo al motor matemático
+        });
+    });
 }
 
 // =========================================
@@ -331,12 +280,14 @@ function activarAutocompletado(inputId, tiposPermitidos, afectaStats) {
     function cerrarListas(elmnt) { var x = document.getElementsByClassName("autocomplete-items"); for (var i = 0; i < x.length; i++) { if (elmnt != x[i] && elmnt != inp) { x[i].parentNode.removeChild(x[i]); } } }
 }
 
-function modificarPuntoInicial(i, v) { if (v === -1 && stats[i].ptsIniciales > 0) { stats[i].ptsIniciales -= 1; puntosInicialesDisp += 1; } else if (v === 1 && puntosInicialesDisp > 0) { stats[i].ptsIniciales += 1; puntosInicialesDisp -= 1; } renderizarTabla(); }
-function iniciarPartida() { modoJuego = true; document.getElementById('fase-creacion').classList.add('hidden'); document.getElementById('fase-juego').classList.remove('hidden'); document.getElementById('col-asignar').classList.add('hidden'); document.getElementById('col-mejora').classList.remove('hidden'); const vNivel = calcularNivelFinal(stats[0]); hpMax = vNivel.total; manaMax = vNivel.total; hpActual = hpMax; manaActual = manaMax; renderizarTabla(); }
-function subirNivelGeneral() { nivelPersonaje++; puntosMejoraDisp++; renderizarTabla(); }
-function gastarPuntoMejora(i) { if (puntosMejoraDisp > 0 && stats[i].id !== 'vitalidad') { stats[i].ptsMejora++; puntosMejoraDisp--; renderizarTabla(); } }
+// =========================================
+// NAVEGACIÓN Y ARRANQUE SEGURO
+// =========================================
 
-// --- ARRANQUE SEGURO Y GUARDIA DE RUTAS ---
+function volverAlLobby() {
+    window.location.href = "index.html"; // Regreso físico
+}
+
 window.addEventListener('DOMContentLoaded', async () => {
     
     // 1. EL GUARDIA DE SEGURIDAD
@@ -348,26 +299,25 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     inicializarStatsBase();
 
-    // 2. LA MAGIA DE LA URL (Saber qué estamos abriendo)
+    // 2. LA MAGIA DE LA URL
     const urlParams = new URLSearchParams(window.location.search);
     const charId = urlParams.get('id');
-    const nuevaHistoriaId = urlParams.get('nueva_historia_id'); // <--- CAZAMOS EL CÓDIGO AQUÍ
+    const nuevaHistoriaId = urlParams.get('nueva_historia_id');
 
     if (charId) {
-        // Opción A: Es un personaje que ya existía, lo descargamos
         await cargarPersonajeSeleccionado(charId);
     } else {
-        // Opción B: Es un lienzo en blanco (Personaje Nuevo)
         nuevoPersonaje();
-        
-        // Si vino desde el botón de "Unirse a Campaña", atamos el ID de la historia
         if (nuevaHistoriaId) {
             historiaIdActual = nuevaHistoriaId;
             document.getElementById('nav-char-name').innerText = "Héroe de Campaña";
         }
     }
     
-    // Activar buscadores de items del inventario
+    // 3. DESCARGAMOS EL BOTÍN DEL DM
+    await cargarItemsDeLaCampana();
+    
+    // 4. Activar buscadores de items
     activarAutocompletado("eq-armadura", ["armadura"], true);
     activarAutocompletado("eq-mano1", ["arma", "escudo"], true);
     activarAutocompletado("eq-mano2", ["arma", "escudo"], true);
