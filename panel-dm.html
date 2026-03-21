@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel DM - Portal D&D</title>
+    <link rel="stylesheet" href="style.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase.js"></script>
+    <script src="dm.js" defer></script>
+</head>
+<body>
+
+<div id="pantalla-dm" style="padding: 20px; padding-top: 80px;">
+    
+    <div class="char-manager-bar" style="background-color: #f39c12;">
+        <div>
+            <button class="btn" style="background: transparent; border: 1px solid white;" onclick="window.location.href='index.html'">🔙 Volver al Portal</button>
+            <strong style="margin-left: 15px; font-size: 18px;" id="dm-campana-nombre">Cargando Campaña...</strong> 
+        </div>
+        <div style="font-family: monospace; font-size: 16px; font-weight: bold; background: rgba(0,0,0,0.2); padding: 5px 10px; border-radius: 4px;">
+            Código: <span id="dm-campana-codigo">------</span>
+        </div>
+    </div>
+
+    <div class="grid-container">
+        
+        <div class="panel">
+            <h2 style="border-bottom-color: #f39c12; color: #d35400;">🛡️ Aventureros en la Campaña</h2>
+            <p style="font-size: 13px; color: #7f8c8d;">Estos son los jugadores que han usado tu código secreto.</p>
+            
+            <div id="lista-jugadores-dm" class="card-list" style="margin-top: 15px;">
+                <p style="text-align: center; color: #7f8c8d;">Buscando jugadores en la nube...</p>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2 style="border-bottom-color: #8e44ad; color: #8e44ad;">⚒️ La Forja (Crear Ítems)</h2>
+            <p style="font-size: 13px; color: #7f8c8d;">Crea equipamiento exclusivo para esta campaña. Tus jugadores podrán buscarlo en su inventario.</p>
+            
+            <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #ddd; margin-top: 15px;">
+                <div style="margin-bottom: 10px;">
+                    <label style="font-weight: bold; font-size: 13px;">Nombre del Ítem</label>
+                    <input type="text" id="nuevo-item-nombre" placeholder="Ej: Espada de Fuego Oscuro" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; margin-top: 5px;">
+                </div>
+                
+                <div style="margin-bottom: 10px;">
+                    <label style="font-weight: bold; font-size: 13px;">Tipo de Ítem</label>
+                    <select id="nuevo-item-tipo" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; margin-top: 5px;">
+                        <option value="arma">Arma (Mano 1 / Mano 2)</option>
+                        <option value="escudo">Escudo (Mano 1 / Mano 2)</option>
+                        <option value="armadura">Armadura (Pecho)</option>
+                        <option value="objeto">Objeto Consumible / Magia</option>
+                    </select>
+                </div>
+
+                <div style="margin-bottom: 10px;">
+                    <label style="font-weight: bold; font-size: 13px;">Bonus (Stat y Valor)</label>
+                    <div style="display: flex; gap: 10px; margin-top: 5px;">
+                        <select id="nuevo-item-stat" style="flex-grow: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                            <option value="ataque">Ataque</option>
+                            <option value="defensa">Defensa</option>
+                            <option value="ataque_magico">Ataque Mágico</option>
+                            <option value="defensa_magica">Defensa Mágica</option>
+                            <option value="velocidad">Velocidad</option>
+                            <option value="inteligencia">Inteligencia</option>
+                            <option value="vitalidad">Vitalidad Máxima</option>
+                            <option value="destreza">Destreza</option>
+                        </select>
+                        <input type="number" id="nuevo-item-valor" placeholder="+5" style="width: 80px; text-align: center; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                    </div>
+                </div>
+
+                <button class="btn w-100" style="background-color: #8e44ad; margin-top: 10px;" onclick="forjarItem()">🔨 Forjar y Guardar Ítem</button>
+            </div>
+
+            <h3 style="margin-top: 20px; font-size: 16px;">Ítems Creados</h3>
+            <ul class="inventory-list" id="lista-items-dm" style="margin-top: 10px; max-height: 200px; overflow-y: auto;">
+                <p style="text-align: center; color: #7f8c8d; font-size: 13px;">Aún no has forjado nada.</p>
+            </ul>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

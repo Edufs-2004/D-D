@@ -336,14 +336,7 @@ function iniciarPartida() { modoJuego = true; document.getElementById('fase-crea
 function subirNivelGeneral() { nivelPersonaje++; puntosMejoraDisp++; renderizarTabla(); }
 function gastarPuntoMejora(i) { if (puntosMejoraDisp > 0 && stats[i].id !== 'vitalidad') { stats[i].ptsMejora++; puntosMejoraDisp--; renderizarTabla(); } }
 
-// =========================================
-// NAVEGACIÓN Y ARRANQUE SEGURO DE LA HOJA
-// =========================================
-
-function volverAlLobby() {
-    window.location.href = "index.html"; // Regreso físico
-}
-
+// --- ARRANQUE SEGURO Y GUARDIA DE RUTAS ---
 window.addEventListener('DOMContentLoaded', async () => {
     
     // 1. EL GUARDIA DE SEGURIDAD
@@ -355,20 +348,26 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     inicializarStatsBase();
 
-    // 2. LA MAGIA DE LA URL: Revisamos si llegamos aquí haciendo clic en un personaje
-    // Ejemplo: personaje.html?id=12345-abcde
+    // 2. LA MAGIA DE LA URL (Saber qué estamos abriendo)
     const urlParams = new URLSearchParams(window.location.search);
     const charId = urlParams.get('id');
+    const nuevaHistoriaId = urlParams.get('nueva_historia_id'); // <--- CAZAMOS EL CÓDIGO AQUÍ
 
     if (charId) {
-        // Si hay ID en la URL, lo descargamos de Supabase
+        // Opción A: Es un personaje que ya existía, lo descargamos
         await cargarPersonajeSeleccionado(charId);
     } else {
-        // Si no hay ID, es que le diste a "Crear Nuevo"
+        // Opción B: Es un lienzo en blanco (Personaje Nuevo)
         nuevoPersonaje();
+        
+        // Si vino desde el botón de "Unirse a Campaña", atamos el ID de la historia
+        if (nuevaHistoriaId) {
+            historiaIdActual = nuevaHistoriaId;
+            document.getElementById('nav-char-name').innerText = "Héroe de Campaña";
+        }
     }
     
-    // Activar buscadores de items
+    // Activar buscadores de items del inventario
     activarAutocompletado("eq-armadura", ["armadura"], true);
     activarAutocompletado("eq-mano1", ["arma", "escudo"], true);
     activarAutocompletado("eq-mano2", ["arma", "escudo"], true);
