@@ -34,22 +34,51 @@ function inicializarStatsBase() {
 }
 
 // =========================================
-// GESTIÓN DEL LOBBY Y NAVEGACIÓN
+// SISTEMA DE GUARDADO EN LA NUBE (SUPABASE)
 // =========================================
-function renderizarLobby() {
-    const guardados = JSON.parse(localStorage.getItem('dnd_personajes')) || [];
-    const listaLobby = document.getElementById('lista-personajes-lobby');
-    listaLobby.innerHTML = '';
 
-    if (guardados.length === 0) {
-        listaLobby.innerHTML = '<p class="text-muted text-center" style="margin: 20px 0;">No tienes personajes creados.</p>';
+async function cargarListaPersonajes() {
+    const selector = document.getElementById('selector-personaje');
+    const listaLobby = document.getElementById('lista-personajes-lobby');
+    
+    selector.innerHTML = '<option value="">-- Crear Nuevo --</option>';
+    listaLobby.innerHTML = '<p class="text-muted text-center" style="margin: 20px 0;">Cargando desde la nube...</p>';
+
+    // 1. Obtener quién soy yo
+    const { data: { user } } = await window.db.auth.getUser();
+    if (!user) return;
+
+    // 2. Pedirle a Supabase MIS personajes
+    const { data: personajesGuardados, error } = await window.db
+        .from('personajes')
+        .select('*')
+        .eq('user_id', user.id);
+
+    if (error) {
+        console.error("Error al cargar personajes:", error);
+        listaLobby.innerHTML = '<p style="color:red; text-align:center;">Error al cargar personajes.</p>';
         return;
     }
 
-    guardados.forEach(p => {
+    listaLobby.innerHTML = ''; // Limpiamos el texto de "Cargando..."
+
+    if (personajesGuardados.length === 0) {
+        listaLobby.innerHTML = '<p class="text-muted text-center" style="margin: 20px 0;">No tienes personajes en la nube.</p>';
+        return;
+    }
+
+    // 3. Pintarlos en el Lobby y en el menú desplegable
+    personajesGuardados.forEach(p => {
+        // Al selector de la hoja
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        opt.innerText = p.identidad.nombre || "Personaje Sin Nombre";
+        if (p.id === idPersonajeActual) opt.selected = true;
+        selector.appendChild(opt);
+
+        // A las tarjetas del Lobby
         const img = p.identidad.imgUrl || 'https://via.placeholder.com/50?text=?';
         const clase = p.identidad.clase || 'Aventurero';
-        
         listaLobby.innerHTML += `
             <div class="char-item" onclick="entrarAlPersonaje('${p.id}')">
                 <img src="${img}" alt="avatar">
@@ -62,69 +91,80 @@ function renderizarLobby() {
     });
 }
 
-function crearNuevoPersonajeLobby() {
-    nuevoPersonaje();
-    document.getElementById('pantalla-lobby').classList.add('hidden');
-    document.getElementById('pantalla-personaje').classList.remove('hidden');
-}
-
-function entrarAlPersonaje(id) {
-    cargarPersonajeSeleccionado(id);
-    document.getElementById('pantalla-lobby').classList.add('hidden');
-    document.getElementById('pantalla-personaje').classList.remove('hidden');
-}
-
-function volverAlLobby() {
-    renderizarLobby();
-    document.getElementById('pantalla-personaje').classList.add('hidden');
-    document.getElementById('pantalla-lobby').classList.remove('hidden');
-}
-
-// =========================================
-// SISTEMA DE GUARDADO
-// =========================================
-function guardarPersonaje() {
+async function guardarPersonaje() {
     const nombreStr = document.getElementById('char-nombre').value.trim();
     if (!nombreStr) { alert("¡Ponle un nombre a tu personaje antes de guardarlo!"); return; }
 
-    if (!idPersonajeActual) idPersonajeActual = Date.now().toString();
+    const btnGuardar = document.querySelector('.char-manager-controls .btn-green');
+    btnGuardar.innerText = "⏳ Guardando...";
+    btnGuardar.disabled = true;
 
-    const personajeData = {
-        id: idPersonajeActual,
+    const { data: { user } } = await window.db.auth.getUser();
+
+    // Recolectar Inventario de Mochila
+    let mochilaArray = [];
+    for(let i=1; i<=5; i++) {
+        mochilaArray.push({ val: document.getElementById(`inv-${i}`).value, id: document.getElementById(`inv-${i}`).dataset.itemId || "" });
+    }
+
+    const payload = {
+        user_id: user.id, // Dueño del personaje
+        historia_id: null, // Por ahora están sueltos (sin campaña)
         identidad: { nombre: nombreStr, imgUrl: document.getElementById('char-img-url').value, sexo: document.getElementById('char-sexo').value, edad: document.getElementById('char-edad').value, clase: document.getElementById('char-clase').value, historia: document.getElementById('char-historia').value },
         progreso: { modoJuego: modoJuego, puntosInicialesDisp: puntosInicialesDisp, nivelPersonaje: nivelPersonaje, puntosMejoraDisp: puntosMejoraDisp, hpActual: hpActual, manaActual: manaActual },
-        statsArray: stats,
-        efectosArray: efectosPersonaje,
+        stats_array: stats,
+        efectos_array: efectosPersonaje,
         inventario: {
             eqArmadura: { val: document.getElementById('eq-armadura').value, id: document.getElementById('eq-armadura').dataset.itemId || "" },
             eqMano1: { val: document.getElementById('eq-mano1').value, id: document.getElementById('eq-mano1').dataset.itemId || "" },
             eqMano2: { val: document.getElementById('eq-mano2').value, id: document.getElementById('eq-mano2').dataset.itemId || "" },
-            mochila: []
+            mochila: mochilaArray
         }
     };
 
-    for(let i=1; i<=5; i++) {
-        personajeData.inventario.mochila.push({ val: document.getElementById(`inv-${i}`).value, id: document.getElementById(`inv-${i}`).dataset.itemId || "" });
+    let errorSupabase = null;
+
+    if (!idPersonajeActual) {
+        // ES NUEVO -> Insertar
+        const { data, error } = await window.db.from('personajes').insert([payload]).select();
+        errorSupabase = error;
+        if(data && data.length > 0) idPersonajeActual = data[0].id;
+    } else {
+        // YA EXISTE -> Actualizar
+        const { error } = await window.db.from('personajes').update(payload).eq('id', idPersonajeActual);
+        errorSupabase = error;
     }
 
-    let guardados = JSON.parse(localStorage.getItem('dnd_personajes')) || [];
-    const index = guardados.findIndex(p => p.id === idPersonajeActual);
-    if (index > -1) guardados[index] = personajeData; 
-    else guardados.push(personajeData); 
+    if (errorSupabase) {
+        console.error("Error al guardar:", errorSupabase);
+        alert("Hubo un error al guardar en la nube.");
+    } else {
+        document.getElementById('nav-char-name').innerText = nombreStr;
+        cargarListaPersonajes(); // Refrescar listas
+    }
 
-    localStorage.setItem('dnd_personajes', JSON.stringify(guardados));
-    document.getElementById('nav-char-name').innerText = nombreStr;
-    alert("¡Personaje Guardado!");
+    btnGuardar.innerText = "💾 Guardar";
+    btnGuardar.disabled = false;
 }
 
-function cargarPersonajeSeleccionado(idSeleccionado) {
-    const guardados = JSON.parse(localStorage.getItem('dnd_personajes')) || [];
-    const data = guardados.find(p => p.id === idSeleccionado);
-    if (!data) return;
+async function cargarPersonajeSeleccionado(idSeleccionadoLocal = null) {
+    // Si viene desde el Lobby usa el idSeleccionadoLocal, si viene del menú usa el valor del select
+    const idSeleccionado = idSeleccionadoLocal || document.getElementById('selector-personaje').value;
+    
+    if (!idSeleccionado) { nuevoPersonaje(); return; }
+
+    const { data, error } = await window.db.from('personajes').select('*').eq('id', idSeleccionado).single();
+    
+    if (error || !data) {
+        console.error("Error al descargar personaje:", error);
+        alert("No se pudo descargar el personaje desde la nube.");
+        return;
+    }
 
     idPersonajeActual = data.id;
     document.getElementById('nav-char-name').innerText = data.identidad.nombre;
 
+    // Desempaquetar datos en pantalla
     document.getElementById('char-nombre').value = data.identidad.nombre;
     document.getElementById('char-img-url').value = data.identidad.imgUrl;
     document.getElementById('char-sexo').value = data.identidad.sexo;
@@ -138,7 +178,8 @@ function cargarPersonajeSeleccionado(idSeleccionado) {
     if (modoJuego) { document.getElementById('fase-creacion').classList.add('hidden'); document.getElementById('fase-juego').classList.remove('hidden'); document.getElementById('col-asignar').classList.add('hidden'); document.getElementById('col-mejora').classList.remove('hidden'); } 
     else { document.getElementById('fase-creacion').classList.remove('hidden'); document.getElementById('fase-juego').classList.add('hidden'); document.getElementById('col-asignar').classList.remove('hidden'); document.getElementById('col-mejora').classList.add('hidden'); }
 
-    stats = data.statsArray; efectosPersonaje = data.efectosArray || [];
+    stats = data.stats_array; 
+    efectosPersonaje = data.efectos_array || [];
 
     const eqIds = ['eq-armadura', 'eq-mano1', 'eq-mano2'];
     const eqData = [data.inventario.eqArmadura, data.inventario.eqMano1, data.inventario.eqMano2];
@@ -166,18 +207,48 @@ function nuevoPersonaje() {
     renderizarEfectos(); actualizarEquipamiento();
 }
 
-function borrarPersonaje() {
+async function borrarPersonaje() {
     if (!idPersonajeActual) return;
-    if (confirm("¿Estás seguro de borrar este personaje permanentemente?")) {
-        let guardados = JSON.parse(localStorage.getItem('dnd_personajes')) || [];
-        guardados = guardados.filter(p => p.id !== idPersonajeActual);
-        localStorage.setItem('dnd_personajes', JSON.stringify(guardados));
-        volverAlLobby();
+    if (confirm("¿Estás seguro de borrar este personaje permanentemente de la nube?")) {
+        const { error } = await window.db.from('personajes').delete().eq('id', idPersonajeActual);
+        if(!error){
+            volverAlLobby();
+        } else {
+            alert("Error al borrar en la nube.");
+            console.error(error);
+        }
     }
 }
 
 // =========================================
-// LÓGICA DEL JUEGO (Motor)
+// NAVEGACIÓN Y EXTRAS
+// =========================================
+function crearNuevoPersonajeLobby() { nuevoPersonaje(); document.getElementById('pantalla-lobby').classList.add('hidden'); document.getElementById('pantalla-personaje').classList.remove('hidden'); }
+function entrarAlPersonaje(id) { cargarPersonajeSeleccionado(id); document.getElementById('pantalla-lobby').classList.add('hidden'); document.getElementById('pantalla-personaje').classList.remove('hidden'); }
+async function volverAlLobby() { await renderizarLobby(); document.getElementById('pantalla-personaje').classList.add('hidden'); document.getElementById('pantalla-lobby').classList.remove('hidden'); }
+
+async function renderizarLobby() {
+    const lobby = document.getElementById('pantalla-lobby');
+    const personaje = document.getElementById('pantalla-personaje');
+    if (lobby && personaje) {
+        personaje.classList.add('hidden');
+        lobby.classList.remove('hidden');
+    }
+    await cargarListaPersonajes();
+    idPersonajeActual = null;
+}
+
+async function cerrarSesion() {
+    try {
+        await window.db.auth.signOut();
+    } catch (error) {
+        console.error('Error en cierre de sesión:', error);
+    }
+    window.location.href = 'login.html';
+}
+
+// =========================================
+// LÓGICA DEL JUEGO (Motor Matemático)
 // =========================================
 function actualizarImagen() { const url = document.getElementById('char-img-url').value; if(url) document.getElementById('char-img-display').src = url; }
 function calcularNivelFinal(stat) { let nivelBase = stat.id === 'vitalidad' ? stat.base + ((nivelPersonaje - 1) * stat.mult) : (stat.base + stat.ptsIniciales) + (stat.mult * stat.ptsMejora); let totalBonus = (stat.bonusEq || 0) + (stat.bonusEfecto || 0); return { puro: nivelBase, total: nivelBase + totalBonus }; }
@@ -215,27 +286,22 @@ function actualizarEquipamiento() {
             }
         }
     });
-    efectosPersonaje.forEach(efecto => {
-        if (efecto.activo) { efecto.mods.forEach(mod => { const statObj = stats.find(s => s.id === mod.stat); if (statObj && !isNaN(mod.valor)) { statObj.bonusEfecto += mod.valor; } }); }
-    });
+    efectosPersonaje.forEach(efecto => { if (efecto.activo) { efecto.mods.forEach(mod => { const statObj = stats.find(s => s.id === mod.stat); if (statObj && !isNaN(mod.valor)) { statObj.bonusEfecto += mod.valor; } }); } });
     renderizarTabla();
 }
 
 function renderizarTabla() {
-    const tbody = document.getElementById('tabla-stats');
-    if(!tbody) return; 
-    tbody.innerHTML = '';
-    if (!modoJuego) recalcularMultiplicadores();
+    const tbody = document.getElementById('tabla-stats'); if(!tbody) return; 
+    tbody.innerHTML = ''; if (!modoJuego) recalcularMultiplicadores();
 
     stats.forEach((stat, index) => {
-        const nivel = calcularNivelFinal(stat);
-        let textoNivel = `${nivel.puro}`;
+        const nivel = calcularNivelFinal(stat); let textoNivel = `${nivel.puro}`;
         if (stat.bonusEq > 0) textoNivel += ` <span class="text-blue">(+${stat.bonusEq})</span>`; else if (stat.bonusEq < 0) textoNivel += ` <span style="color:#e74c3c;">(${stat.bonusEq})</span>`;
         if (stat.bonusEfecto > 0) textoNivel += ` <span style="color:#8e44ad;">(+${stat.bonusEfecto})</span>`; else if (stat.bonusEfecto < 0) textoNivel += ` <span style="color:#e74c3c;">(${stat.bonusEfecto})</span>`;
         
         let colInt = '';
         if (stat.id === 'vitalidad') { colInt = `<td><span class="text-muted">Auto</span></td>`; } 
-        else if (!modoJuego) { colInt = `<td><button class="btn btn-blue btn-small" onclick="modificarPuntoInicial(${index}, -1)">-</button> <span style="display:inline-block; width:20px; font-weight:bold; text-align:center;">${stat.ptsIniciales}</span> <button class="btn btn-blue btn-small" onclick="modificarPuntoInicial(${index}, 1)" ${puntosInicialesDisp === 0 ? 'disabled' : ''}>+</button></td>`; } 
+        else if (!modoJuego) { colInt = `<td><div class="stat-control"><button class="btn btn-blue btn-small" onclick="modificarPuntoInicial(${index}, 1)" ${puntosInicialesDisp === 0 ? 'disabled' : ''}>+</button><span style="display:inline-block; width:20px; font-weight:bold; text-align:center;">${stat.ptsIniciales}</span><button class="btn btn-blue btn-small" onclick="modificarPuntoInicial(${index}, -1)">-</button></div></td>`; } 
         else { colInt = `<td><button class="btn btn-green btn-small" onclick="gastarPuntoMejora(${index})" ${puntosMejoraDisp === 0 ? 'disabled' : ''}>+ Mejorar</button><span style="font-size: 12px; color: #7f8c8d; display: block; margin-top: 3px;">Gastados: ${stat.ptsMejora}</span></td>`; }
         tbody.innerHTML += `<tr><td><strong>${stat.nombre}</strong></td><td style="font-size: 18px; font-weight: bold;">${textoNivel}</td>${colInt}<td style="color: #8e44ad; font-weight: bold;">+${stat.mult}</td></tr>`;
     });
@@ -251,98 +317,71 @@ function renderizarTabla() {
 }
 
 function desequipar(idEquipado) {
-    const inputEq = document.getElementById(idEquipado);
-    if (!inputEq || !inputEq.value) return;
-    let slotVacio = null;
-    for (let i = 1; i <= 5; i++) { const invInput = document.getElementById(`inv-${i}`); if (invInput && !invInput.value) { slotVacio = invInput; break; } }
+    const inputEq = document.getElementById(idEquipado); if (!inputEq || !inputEq.value) return;
+    let slotVacio = null; for (let i = 1; i <= 5; i++) { const invInput = document.getElementById(`inv-${i}`); if (invInput && !invInput.value) { slotVacio = invInput; break; } }
     if (!slotVacio) { alert("Mochila llena. No hay espacio para guardar esto."); return; }
-    slotVacio.value = inputEq.value; slotVacio.dataset.itemId = inputEq.dataset.itemId || "";
-    inputEq.value = ""; inputEq.dataset.itemId = "";
-    actualizarEquipamiento();
+    slotVacio.value = inputEq.value; slotVacio.dataset.itemId = inputEq.dataset.itemId || ""; inputEq.value = ""; inputEq.dataset.itemId = ""; actualizarEquipamiento();
 }
 
 function intercambiar(slotNum) {
-    const invInput = document.getElementById(`inv-${slotNum}`);
-    const targetInput = document.getElementById(document.getElementById(`target-${slotNum}`).value);
-    if (!invInput || !targetInput) return;
-    if (!invInput.value && !targetInput.value) return; 
+    const invInput = document.getElementById(`inv-${slotNum}`); const targetInput = document.getElementById(document.getElementById(`target-${slotNum}`).value);
+    if (!invInput || !targetInput) return; if (!invInput.value && !targetInput.value) return; 
     const tempValorDestino = targetInput.value; const tempIdDestino = targetInput.dataset.itemId || "";
     targetInput.value = invInput.value; targetInput.dataset.itemId = invInput.dataset.itemId || "";
-    invInput.value = tempValorDestino; invInput.dataset.itemId = tempIdDestino;
-    actualizarEquipamiento(); 
+    invInput.value = tempValorDestino; invInput.dataset.itemId = tempIdDestino; actualizarEquipamiento(); 
 }
 
 function modificarBarra(tipo, mult) {
     const inputElem = document.getElementById(`${tipo}-input`); const valor = parseInt(inputElem.value) || 0; if(valor === 0) return;
     if (tipo === 'hp') { hpActual += (valor * mult); if (hpActual < 0) hpActual = 0; if (hpActual > hpMax) hpActual = hpMax; } 
     else if (tipo === 'mana') { manaActual += (valor * mult); if (manaActual < 0) manaActual = 0; if (manaActual > manaMax) manaActual = manaMax; }
-    inputElem.value = 1; actualizarVisualesBarras();
-    if(hpActual === 0) setTimeout(() => alert("¡TUS PUNTOS DE VIDA SON 0! Tira los dados."), 600);
+    inputElem.value = 1; actualizarVisualesBarras(); if(hpActual === 0) setTimeout(() => alert("¡TUS PUNTOS DE VIDA SON 0! Tira los dados."), 600);
 }
 
 function actualizarVisualesBarras() {
-    const hpPct = (hpActual / hpMax) * 100;
-    document.getElementById('hp-bar').style.width = `${hpPct}%`; document.getElementById('hp-text-display').innerText = `${hpActual} / ${hpMax}`;
+    const hpPct = (hpActual / hpMax) * 100; document.getElementById('hp-bar').style.width = `${hpPct}%`; document.getElementById('hp-text-display').innerText = `${hpActual} / ${hpMax}`;
     if (hpPct <= 30) { document.getElementById('hp-bar').classList.add('low'); document.getElementById('hp-text-display').classList.add('low'); } else { document.getElementById('hp-bar').classList.remove('low'); document.getElementById('hp-text-display').classList.remove('low'); }
-    const manaPct = (manaActual / manaMax) * 100;
-    document.getElementById('mana-bar').style.width = `${manaPct}%`; document.getElementById('mana-text-display').innerText = `${manaActual} / ${manaMax}`;
+    const manaPct = (manaActual / manaMax) * 100; document.getElementById('mana-bar').style.width = `${manaPct}%`; document.getElementById('mana-text-display').innerText = `${manaActual} / ${manaMax}`;
 }
 
 function activarAutocompletado(inputId, tiposPermitidos, afectaStats) {
-    const inp = document.getElementById(inputId);
-    if(!inp) return;
+    const inp = document.getElementById(inputId); if(!inp) return;
     inp.addEventListener("input", function(e) {
-        let val = this.value; cerrarListas(); 
-        if (!val) { this.dataset.itemId = ""; if(afectaStats) actualizarEquipamiento(); return false; }
+        let val = this.value; cerrarListas(); if (!val) { this.dataset.itemId = ""; if(afectaStats) actualizarEquipamiento(); return false; }
         let listaDiv = document.createElement("DIV"); listaDiv.setAttribute("id", this.id + "autocomplete-list"); listaDiv.setAttribute("class", "autocomplete-items"); this.parentNode.appendChild(listaDiv);
         let coincidencias = baseDatosItems.filter(item => item.nombre.toLowerCase().includes(val.toLowerCase()));
         coincidencias.forEach(item => {
             let itemDiv = document.createElement("DIV"); let index = item.nombre.toLowerCase().indexOf(val.toLowerCase());
             itemDiv.innerHTML = item.nombre.substring(0, index) + "<strong>" + item.nombre.substring(index, index + val.length) + "</strong>" + item.nombre.substring(index + val.length);
-            itemDiv.addEventListener("click", function(e) { inp.value = item.nombre; inp.dataset.itemId = item.id; cerrarListas(); if(afectaStats) actualizarEquipamiento(); });
-            listaDiv.appendChild(itemDiv);
+            itemDiv.addEventListener("click", function(e) { inp.value = item.nombre; inp.dataset.itemId = item.id; cerrarListas(); if(afectaStats) actualizarEquipamiento(); }); listaDiv.appendChild(itemDiv);
         });
     });
     document.addEventListener("click", function (e) { cerrarListas(e.target); });
     function cerrarListas(elmnt) { var x = document.getElementsByClassName("autocomplete-items"); for (var i = 0; i < x.length; i++) { if (elmnt != x[i] && elmnt != inp) { x[i].parentNode.removeChild(x[i]); } } }
 }
 
-function modificarPuntoInicial(i, v) {
-    if (v === -1 && stats[i].ptsIniciales > 0) { stats[i].ptsIniciales -= 1; puntosInicialesDisp += 1; } 
-    else if (v === 1 && puntosInicialesDisp > 0) { stats[i].ptsIniciales += 1; puntosInicialesDisp -= 1; }
-    renderizarTabla();
-}
-
-function iniciarPartida() {
-    modoJuego = true;
-    document.getElementById('fase-creacion').classList.add('hidden'); document.getElementById('fase-juego').classList.remove('hidden');
-    document.getElementById('col-asignar').classList.add('hidden'); document.getElementById('col-mejora').classList.remove('hidden');
-    const vNivel = calcularNivelFinal(stats[0]); hpMax = vNivel.total; manaMax = vNivel.total; hpActual = hpMax; manaActual = manaMax;
-    renderizarTabla();
-}
-
+function modificarPuntoInicial(i, v) { if (v === -1 && stats[i].ptsIniciales > 0) { stats[i].ptsIniciales -= 1; puntosInicialesDisp += 1; } else if (v === 1 && puntosInicialesDisp > 0) { stats[i].ptsIniciales += 1; puntosInicialesDisp -= 1; } renderizarTabla(); }
+function iniciarPartida() { modoJuego = true; document.getElementById('fase-creacion').classList.add('hidden'); document.getElementById('fase-juego').classList.remove('hidden'); document.getElementById('col-asignar').classList.add('hidden'); document.getElementById('col-mejora').classList.remove('hidden'); const vNivel = calcularNivelFinal(stats[0]); hpMax = vNivel.total; manaMax = vNivel.total; hpActual = hpMax; manaActual = manaMax; renderizarTabla(); }
 function subirNivelGeneral() { nivelPersonaje++; puntosMejoraDisp++; renderizarTabla(); }
 function gastarPuntoMejora(i) { if (puntosMejoraDisp > 0 && stats[i].id !== 'vitalidad') { stats[i].ptsMejora++; puntosMejoraDisp--; renderizarTabla(); } }
 
 // --- ARRANQUE SEGURO Y GUARDIA DE RUTAS ---
 window.addEventListener('DOMContentLoaded', async () => {
     
-    // 1. EL GUARDIA DE SEGURIDAD
-    // Verificamos si hay una sesión activa en Supabase
+    // 1. EL GUARDIA DE SEGURIDAD MIRA LA NUBE
     const { data: { session } } = await window.db.auth.getSession();
     
     if (!session) {
-        // Si no hay sesión, lo pateamos a la pantalla de login inmediatamente
         console.warn("Acceso denegado: No hay sesión activa.");
         window.location.href = "login.html";
-        return; // Detenemos la ejecución del resto del código
+        return; 
     }
 
-    // 2. SI HAY SESIÓN, CARGAMOS EL JUEGO
-    console.log("Acceso concedido. Cargando el portal...");
+    console.log("Acceso concedido. Usuario:", session.user.email);
     
+    // 2. INICIALIZAMOS
     inicializarStatsBase();
-    renderizarLobby(); 
+    renderizarLobby(); // <-- AHORA CARGA DESDE LA NUBE
     
     activarAutocompletado("eq-armadura", ["armadura"], true);
     activarAutocompletado("eq-mano1", ["arma", "escudo"], true);
