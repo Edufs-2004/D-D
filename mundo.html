@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mundo de Campaña - Portal D&D</title>
+    <link rel="stylesheet" href="style.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase.js"></script>
+    <script src="mundo.js" defer></script>
+</head>
+<body>
+
+<div id="pantalla-mundo" style="padding: 20px; padding-top: 80px;">
+    
+    <div class="char-manager-bar" style="background-color: #2c3e50;">
+        <div>
+            <button class="btn" style="background: transparent; border: 1px solid white;" onclick="window.location.href='index.html'">🔙 Volver al Portal</button>
+            <strong style="margin-left: 15px; font-size: 18px;" id="mundo-campana-nombre">Cargando Historia...</strong> 
+        </div>
+    </div>
+
+    <div class="grid-container">
+        
+        <div class="panel">
+            <h2 style="border-bottom-color: #f39c12; color: #d35400;">📖 Diario del Mundo</h2>
+            <p style="font-size: 13px; color: #7f8c8d;">Últimas notas, reglas o historia escrita por tu Dungeon Master.</p>
+            
+            <div style="background: #fafafa; padding: 20px; border-radius: 8px; border: 1px solid #ddd; margin-top: 15px; min-height: 300px; white-space: pre-wrap; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 15px; line-height: 1.5; color: #2c3e50;" id="mundo-lore-display">
+                El DM aún no ha escrito nada en el diario...
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2 style="border-bottom-color: #27ae60; color: #27ae60;">🛡️ Tus Personajes aquí</h2>
+            <p style="font-size: 13px; color: #7f8c8d;">Tus héroes que participan en esta campaña.</p>
+            
+            <div id="lista-mis-personajes" class="card-list" style="margin-top: 15px;">
+                <p style="text-align: center; color: #7f8c8d;">Buscando...</p>
+            </div>
+            
+            <button class="btn btn-green w-100" style="margin-top: 10px;" onclick="crearPersonajeParaCampaña()">+ Crear Nuevo Personaje Aquí</button>
+
+            <h2 style="border-bottom-color: #3498db; color: #2980b9; margin-top: 30px;">👥 Aventureros del Grupo</h2>
+            <p style="font-size: 13px; color: #7f8c8d;">Tus compañeros de viaje.</p>
+            
+            <div id="lista-companeros" class="card-list" style="margin-top: 15px;">
+                <p style="text-align: center; color: #7f8c8d;">Aún no hay nadie más...</p>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+</body>
+</html>

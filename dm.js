@@ -23,7 +23,14 @@ window.addEventListener('DOMContentLoaded', async () => {
 // =========================================
 async function cargarDatosCampana() {
     const { data } = await window.db.from('historias').select('*').eq('id', campanaIdActual).single();
-    if (data) { document.getElementById('dm-campana-nombre').innerText = data.nombre; document.getElementById('dm-campana-codigo').innerText = data.codigo_acceso; }
+    if (data) { 
+        document.getElementById('dm-campana-nombre').innerText = data.nombre; 
+        document.getElementById('dm-campana-codigo').innerText = data.codigo_acceso; 
+        
+        // NUEVO: Cargar el lore si ya existía
+        const cajaLore = document.getElementById('dm-lore');
+        if(cajaLore) cajaLore.value = data.diario_lore || "";
+    }
 }
 
 async function cargarJugadores() {
@@ -281,3 +288,34 @@ async function guardarInvNpc(npcId) {
 
 async function modificarVidaNpc(id, hpActual, modificador) { let nuevoHp = Math.max(0, hpActual + modificador); await window.db.from('npc_activos').update({ hp_actual: nuevoHp }).eq('id', id); cargarTableroEnVivo(); }
 async function eliminarDelTablero(id) { if(confirm("¿Quitar a este enemigo del tablero?")) { await window.db.from('npc_activos').delete().eq('id', id); cargarTableroEnVivo(); } }
+
+// =========================================
+// 6. EL DIARIO DEL MUNDO (LORE)
+// =========================================
+async function guardarLore() {
+    const textoLore = document.getElementById('dm-lore').value;
+    const boton = document.querySelector('button[onclick="guardarLore()"]');
+    
+    boton.innerText = "⏳ Escribiendo en la nube...";
+    boton.disabled = true;
+
+    // Actualizamos la columna diario_lore en la tabla historias
+    const { error } = await window.db.from('historias').update({ diario_lore: textoLore }).eq('id', campanaIdActual);
+
+    if (error) {
+        alert("Error al guardar el diario.");
+        console.error(error);
+        boton.disabled = false;
+        boton.innerText = "📢 Guardar y Publicar Diario";
+    } else {
+        // Truco visual para confirmar que se guardó
+        boton.style.backgroundColor = "#27ae60";
+        boton.innerText = "✅ ¡Diario Publicado!";
+        
+        setTimeout(() => {
+            boton.style.backgroundColor = "#f39c12"; // Vuelve al color naranja original
+            boton.innerText = "📢 Guardar y Publicar Diario";
+            boton.disabled = false;
+        }, 2000);
+    }
+}

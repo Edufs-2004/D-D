@@ -17,7 +17,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 });
 
 // =========================================
-// 2. COLUMNA IZQUIERDA: JUGADOR
+// 2. COLUMNA IZQUIERDA: JUGADOR (El Hub)
 // =========================================
 async function renderizarLobby() {
     const listaLobby = document.getElementById('lista-personajes-lobby');
@@ -25,10 +25,10 @@ async function renderizarLobby() {
 
     const { data: { user } } = await window.db.auth.getUser();
     
-    // Pedimos los personajes y el nombre de su historia a Supabase
+    // Pedimos los personajes y el ID/Nombre de su historia a Supabase
     const { data: personajesGuardados, error } = await window.db
         .from('personajes')
-        .select('*, historias(nombre)')
+        .select('*, historias(id, nombre)')
         .eq('user_id', user.id);
 
     if (error) {
@@ -40,39 +40,56 @@ async function renderizarLobby() {
     listaLobby.innerHTML = '';
 
     if (personajesGuardados.length === 0) {
-        listaLobby.innerHTML = '<p style="text-align:center; color:#7f8c8d;">No tienes personajes creados.</p>';
+        listaLobby.innerHTML = '<p style="text-align:center; color:#7f8c8d;">No tienes personajes ni campañas activas.</p>';
         return;
     }
 
-    // Dividimos los personajes: Los que tienen campaña y los libres
-    const personajesEnCampana = personajesGuardados.filter(p => p.historia_id !== null);
-    const personajesLibres = personajesGuardados.filter(p => p.historia_id === null);
+    // 1. AGRUPAR POR CAMPAÑAS
+    let campanasMap = {};
+    let personajesLibres = [];
 
-    // Dibujamos los que están dentro de una Campaña
-    if (personajesEnCampana.length > 0) {
-        personajesEnCampana.forEach(p => {
-            const img = p.identidad.imgUrl || 'https://via.placeholder.com/150?text=Retrato';
-            const clase = p.identidad.clase || 'Aventurero';
-            const nombreCampana = p.historias ? p.historias.nombre : "Campaña Desconocida";
-            
+    personajesGuardados.forEach(p => {
+        // Si el personaje está atado a una historia que existe
+        if (p.historia_id && p.historias) {
+            if (!campanasMap[p.historia_id]) {
+                campanasMap[p.historia_id] = {
+                    id: p.historias.id,
+                    nombre: p.historias.nombre,
+                    conteo: 0
+                };
+            }
+            campanasMap[p.historia_id].conteo++;
+        } else {
+            // Si es un personaje sin campaña
+            personajesLibres.push(p);
+        }
+    });
+
+    // 2. DIBUJAR LAS CAMPAÑAS ALOJADAS
+    const campanasIds = Object.keys(campanasMap);
+    
+    if (campanasIds.length > 0) {
+        campanasIds.forEach(id => {
+            const camp = campanasMap[id];
             listaLobby.innerHTML += `
-                <div class="char-item" style="border-left: 4px solid #3498db;" onclick="window.location.href='personaje.html?id=${p.id}'">
-                    <img src="${img}" alt="avatar">
+                <div class="char-item" style="border-left: 4px solid #8e44ad; background: #fdfbfd;" onclick="window.location.href='mundo.html?id=${camp.id}'">
                     <div class="char-info" style="width: 100%;">
-                        <p style="margin:0; font-size:10px; color:#3498db; font-weight:bold; text-transform:uppercase;">🛡️ ${nombreCampana}</p>
-                        <h4 style="margin:2px 0;">${p.identidad.nombre || "Desconocido"}</h4>
-                        <p>Nivel ${p.progreso.nivelPersonaje} | ${clase}</p>
+                        <h4 style="margin:2px 0; color:#8e44ad; font-size:16px;">📖 ${camp.nombre}</h4>
+                        <p style="color: #7f8c8d; font-size:12px; margin-top:3px;">
+                            Tienes ${camp.conteo} héroe(s) aquí. Haz clic para entrar al mundo.
+                        </p>
                     </div>
                 </div>
             `;
         });
     }
 
-    // Dibujamos los que están Libres
+    // 3. DIBUJAR LOS PERSONAJES LIBRES
     if (personajesLibres.length > 0) {
-        listaLobby.innerHTML += `<h4 style="margin:15px 0 5px 0; color:#7f8c8d; font-size:12px; text-transform:uppercase;">Libres (Sin Campaña)</h4>`;
+        listaLobby.innerHTML += `<h4 style="margin:15px 0 5px 0; color:#7f8c8d; font-size:12px; text-transform:uppercase;">Héroes Libres (Sin Campaña)</h4>`;
+        
         personajesLibres.forEach(p => {
-            const img = p.identidad.imgUrl || 'https://via.placeholder.com/150?text=Retrato';
+            const img = p.identidad.imgUrl || 'https://via.placeholder.com/50?text=?';
             const clase = p.identidad.clase || 'Aventurero';
             
             listaLobby.innerHTML += `
@@ -85,36 +102,6 @@ async function renderizarLobby() {
                 </div>
             `;
         });
-    }
-}
-
-function crearNuevoPersonajeLobby() {
-    window.location.href = 'personaje.html';
-}
-
-async function unirseAHistoriaPrompt() {
-    const codigo = prompt("Ingresa el código secreto de la campaña:");
-    if (!codigo || codigo.trim() === "") return;
-
-    const codigoLimpio = codigo.trim().toUpperCase();
-
-    // Buscar en la Nube si existe una historia con ese código
-    const { data: historia, error } = await window.db
-        .from('historias')
-        .select('id, nombre')
-        .eq('codigo_acceso', codigoLimpio)
-        .single();
-
-    if (error || !historia) {
-        alert("❌ No se encontró ninguna campaña con ese código. Verifica si tiene mayúsculas/números e intenta de nuevo.");
-        return;
-    }
-
-    // Si la encontró, confirmamos y lo mandamos a crear la ficha
-    const confirmar = confirm(`¡Campaña encontrada: "${historia.nombre}"! 🐉\n\n¿Quieres crear tu personaje para esta aventura ahora mismo?`);
-    
-    if (confirmar) {
-        window.location.href = `personaje.html?nueva_historia_id=${historia.id}`;
     }
 }
 

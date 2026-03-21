@@ -1,7 +1,8 @@
+// app.js
+
 // =========================================
 // BASE DE DATOS Y ESTADO GLOBAL
 // =========================================
-// ¡AQUÍ MATAMOS LA LISTA INTERNA! Ahora arranca vacía siempre.
 let baseDatosItems = []; 
 
 let idPersonajeActual = null;
@@ -45,7 +46,7 @@ async function guardarPersonaje() {
 
     const payload = {
         user_id: user.id,
-        historia_id: historiaIdActual, // Guardamos la conexión a la campaña
+        historia_id: historiaIdActual, 
         identidad: { nombre: nombreStr, imgUrl: document.getElementById('char-img-url').value, sexo: document.getElementById('char-sexo').value, edad: document.getElementById('char-edad').value, clase: document.getElementById('char-clase').value, historia: document.getElementById('char-historia').value },
         progreso: { modoJuego: modoJuego, puntosInicialesDisp: puntosInicialesDisp, nivelPersonaje: nivelPersonaje, puntosMejoraDisp: puntosMejoraDisp, hpActual: hpActual, manaActual: manaActual },
         stats_array: stats,
@@ -82,7 +83,6 @@ async function cargarPersonajeSeleccionado(idSeleccionado) {
     if (!idSeleccionado) return;
 
     const { data, error } = await window.db.from('personajes').select('*').eq('id', idSeleccionado).single();
-    
     if (error || !data) { alert("Error al cargar de la nube."); return; }
 
     idPersonajeActual = data.id;
@@ -144,25 +144,18 @@ async function borrarPersonaje() {
 // CONEXIÓN CON EL DUNGEON MASTER (EL BOTÍN)
 // =========================================
 async function cargarItemsDeLaCampana() {
-    baseDatosItems = []; // Siempre vaciamos la mochila virtual al cargar
-
+    baseDatosItems = []; 
     if (!historiaIdActual) return; 
 
-    // Le pedimos a Supabase los ítems exclusivos de esta historia
-    const { data: itemsDM, error } = await window.db
-        .from('items')
-        .select('*')
-        .eq('historia_id', historiaIdActual);
-
+    const { data: itemsDM, error } = await window.db.from('items').select('*').eq('historia_id', historiaIdActual);
     if (error || !itemsDM) return;
 
-    // Llenamos la base de datos que usa el autocompletado
     itemsDM.forEach(item => {
         baseDatosItems.push({
             id: item.id,
-            nombre: `✨ ${item.nombre}`, // Ítems del DM llevan estrellas
+            nombre: `✨ ${item.nombre}`,
             tipo: item.tipo,
-            bonus: item.bonus // Como Supabase guarda JSON, esto pasa directo al motor matemático
+            bonus: item.bonus
         });
     });
 }
@@ -210,6 +203,17 @@ function actualizarEquipamiento() {
     renderizarTabla();
 }
 
+function modificarPuntoInicial(i, v) {
+    if (v === -1 && stats[i].ptsIniciales > 0) {
+        stats[i].ptsIniciales -= 1;
+        puntosInicialesDisp += 1;
+    } else if (v === 1 && puntosInicialesDisp > 0) {
+        stats[i].ptsIniciales += 1;
+        puntosInicialesDisp -= 1;
+    }
+    renderizarTabla();
+}
+
 function renderizarTabla() {
     const tbody = document.getElementById('tabla-stats'); if(!tbody) return; 
     tbody.innerHTML = ''; if (!modoJuego) recalcularMultiplicadores();
@@ -220,9 +224,23 @@ function renderizarTabla() {
         if (stat.bonusEfecto > 0) textoNivel += ` <span style="color:#8e44ad;">(+${stat.bonusEfecto})</span>`; else if (stat.bonusEfecto < 0) textoNivel += ` <span style="color:#e74c3c;">(${stat.bonusEfecto})</span>`;
         
         let colInt = '';
-        if (stat.id === 'vitalidad') { colInt = `<td><span class="text-muted">Auto</span></td>`; } 
-        else if (!modoJuego) { colInt = `<td><div class="stat-control"><button class="btn btn-blue btn-small" onclick="modificarPuntoInicial(${index}, 1)" ${puntosInicialesDisp === 0 ? 'disabled' : ''}>+</button><span style="display:inline-block; width:20px; font-weight:bold; text-align:center;">${stat.ptsIniciales}</span><button class="btn btn-blue btn-small" onclick="modificarPuntoInicial(${index}, -1)">-</button></div></td>`; } 
-        else { colInt = `<td><button class="btn btn-green btn-small" onclick="gastarPuntoMejora(${index})" ${puntosMejoraDisp === 0 ? 'disabled' : ''}>+ Mejorar</button><span style="font-size: 12px; color: #7f8c8d; display: block; margin-top: 3px;">Gastados: ${stat.ptsMejora}</span></td>`; }
+        if (stat.id === 'vitalidad') { 
+            colInt = `<td><span class="text-muted">Auto</span></td>`; 
+        } 
+        else if (!modoJuego) { 
+            // CORRECCIÓN: Botones de Asignación en orden correcto [ - ] [ Valor ] [ + ]
+            colInt = `<td>
+                <div style="display:flex; justify-content:center; align-items:center; gap:8px;">
+                    <button class="btn btn-blue btn-small" onclick="modificarPuntoInicial(${index}, -1)">-</button>
+                    <span style="display:inline-block; width:20px; font-weight:bold; text-align:center;">${stat.ptsIniciales}</span>
+                    <button class="btn btn-blue btn-small" onclick="modificarPuntoInicial(${index}, 1)" ${puntosInicialesDisp === 0 ? 'disabled' : ''}>+</button>
+                </div>
+            </td>`; 
+        } 
+        else { 
+            colInt = `<td><button class="btn btn-green btn-small" onclick="gastarPuntoMejora(${index})" ${puntosMejoraDisp === 0 ? 'disabled' : ''}>+ Mejorar</button><span style="font-size: 12px; color: #7f8c8d; display: block; margin-top: 3px;">Gastados: ${stat.ptsMejora}</span></td>`; 
+        }
+        
         tbody.innerHTML += `<tr><td><strong>${stat.nombre}</strong></td><td style="font-size: 18px; font-weight: bold;">${textoNivel}</td>${colInt}<td style="color: #8e44ad; font-weight: bold;">+${stat.mult}</td></tr>`;
     });
 
@@ -280,17 +298,19 @@ function activarAutocompletado(inputId, tiposPermitidos, afectaStats) {
     function cerrarListas(elmnt) { var x = document.getElementsByClassName("autocomplete-items"); for (var i = 0; i < x.length; i++) { if (elmnt != x[i] && elmnt != inp) { x[i].parentNode.removeChild(x[i]); } } }
 }
 
+function iniciarPartida() { modoJuego = true; document.getElementById('fase-creacion').classList.add('hidden'); document.getElementById('fase-juego').classList.remove('hidden'); document.getElementById('col-asignar').classList.add('hidden'); document.getElementById('col-mejora').classList.remove('hidden'); const vNivel = calcularNivelFinal(stats[0]); hpMax = vNivel.total; manaMax = vNivel.total; hpActual = hpMax; manaActual = manaMax; renderizarTabla(); }
+function subirNivelGeneral() { nivelPersonaje++; puntosMejoraDisp++; renderizarTabla(); }
+function gastarPuntoMejora(i) { if (puntosMejoraDisp > 0 && stats[i].id !== 'vitalidad') { stats[i].ptsMejora++; puntosMejoraDisp--; renderizarTabla(); } }
+
 // =========================================
 // NAVEGACIÓN Y ARRANQUE SEGURO
 // =========================================
-
 function volverAlLobby() {
-    window.location.href = "index.html"; // Regreso físico
+    window.location.href = "index.html"; 
 }
 
 window.addEventListener('DOMContentLoaded', async () => {
     
-    // 1. EL GUARDIA DE SEGURIDAD
     const { data: { session } } = await window.db.auth.getSession();
     if (!session) {
         window.location.href = "login.html";
@@ -299,7 +319,6 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     inicializarStatsBase();
 
-    // 2. LA MAGIA DE LA URL
     const urlParams = new URLSearchParams(window.location.search);
     const charId = urlParams.get('id');
     const nuevaHistoriaId = urlParams.get('nueva_historia_id');
@@ -314,10 +333,8 @@ window.addEventListener('DOMContentLoaded', async () => {
         }
     }
     
-    // 3. DESCARGAMOS EL BOTÍN DEL DM
     await cargarItemsDeLaCampana();
     
-    // 4. Activar buscadores de items
     activarAutocompletado("eq-armadura", ["armadura"], true);
     activarAutocompletado("eq-mano1", ["arma", "escudo"], true);
     activarAutocompletado("eq-mano2", ["arma", "escudo"], true);
