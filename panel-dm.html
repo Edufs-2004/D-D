@@ -11,9 +11,9 @@
 </head>
 <body>
 
-<div id="pantalla-dm" style="padding: 20px; padding-top: 80px;">
+<div id="pantalla-dm" style="padding: 20px; padding-top: 80px; transition: background 0.5s;">
     
-    <div class="char-manager-bar" style="background-color: #f39c12;">
+    <div class="char-manager-bar" id="dm-top-bar" style="background-color: #f39c12; transition: 0.5s;">
         <div>
             <button class="btn" style="background: transparent; border: 1px solid white;" onclick="window.location.href='index.html'">🔙 Volver al Portal</button>
             <strong style="margin-left: 15px; font-size: 18px;" id="dm-campana-nombre">Cargando Campaña...</strong> 
@@ -28,6 +28,7 @@
         <button class="tab-btn" onclick="abrirPestana(event, 'tab-bestiario')">📖 Bestiario</button>
         <button class="tab-btn" onclick="abrirPestana(event, 'tab-forja')">⚒️ La Forja</button>
         <button class="tab-btn" onclick="abrirPestana(event, 'tab-diario')">📜 Diario del Mundo</button>
+        <button class="tab-btn" onclick="abrirPestana(event, 'tab-config')" style="color:#d35400;">⚙️ Config. del Mundo</button>
     </div>
 
     <div class="tabs-container" style="max-width: 1200px; margin: 0 auto; padding-bottom: 40px;">
@@ -35,44 +36,37 @@
         <div id="tab-tablero" class="tab-content active">
             <div class="grid-container" style="grid-template-columns: 1fr 1.5fr;">
                 <div class="panel">
-                    <h2 style="border-bottom-color: #3498db; color: #2980b9;">🛡️ Aventureros (Jugadores)</h2>
+                    <h2 style="border-bottom-color: #3498db; color: #2980b9;">🛡️ Aventureros</h2>
                     <div id="lista-jugadores-dm" class="card-list" style="max-height: 600px;"></div>
                 </div>
 
                 <div class="panel">
-                    <h2 style="border-bottom-color: #e74c3c; color: #c0392b;">🩸 Tablero de Combate (NPCs Activos)</h2>
-                    <p style="font-size: 12px; color: #7f8c8d;">Los enemigos invocados desde tu bestiario aparecen aquí.</p>
-                    <div id="lista-npcs-activos" class="card-list" style="margin-top: 15px; max-height: 600px;">
-                        <p style="text-align: center; color: #7f8c8d;">No hay enemigos en el tablero.</p>
-                    </div>
+                    <h2 style="border-bottom-color: #e74c3c; color: #c0392b;">🩸 Tablero de Combate</h2>
+                    <div id="lista-npcs-activos" class="card-list" style="margin-top: 15px; max-height: 600px;"></div>
                 </div>
             </div>
         </div>
 
         <div id="tab-bestiario" class="tab-content">
             <div class="panel" style="max-width: 900px; margin: 0 auto;">
-                <h2 style="border-bottom-color: #27ae60; color: #27ae60;">📖 El Bestiario (Tus Plantillas)</h2>
+                <h2 style="border-bottom-color: #27ae60; color: #27ae60;">📖 El Bestiario</h2>
                 
                 <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 15px;">
-                    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                        <input type="text" id="npc-nombre" placeholder="Nombre (Ej: Goblin Saqueador)" style="flex-grow: 1; padding: 6px; border: 1px solid #ccc; border-radius: 4px;">
-                    </div>
-                    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                        <div style="flex-grow: 1;"><label style="font-size: 11px; font-weight: bold;">Vida (HP)</label><input type="number" id="npc-hp" value="20" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px;"></div>
-                        <div style="flex-grow: 1;"><label style="font-size: 11px; font-weight: bold;">Maná</label><input type="number" id="npc-mana" value="0" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px;"></div>
+                    <input type="text" id="npc-nombre" placeholder="Nombre de la criatura..." style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 10px;">
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: center; background: #ecf0f1; padding: 10px; border-radius: 6px; margin-bottom: 10px;">
+                        <div style="text-align: center; flex-grow:1;">
+                            <label style="font-size: 10px; font-weight: bold; color: #c0392b;">VITALIDAD (Calcula HP y Maná automáticamente)</label>
+                            <input type="number" id="npc-vit" value="1" oninput="calcularVidaNpcPreview()" style="width: 80%; text-align: center; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; padding: 4px;">
+                        </div>
+                        <div style="flex-grow:1; text-align: center; font-size: 18px; font-weight: bold; color: #27ae60;">
+                            ❤️ <span id="npc-hp-preview">25</span> | 💧 <span id="npc-mana-preview">25</span>
+                        </div>
                     </div>
                     
-                    <label style="font-size: 11px; font-weight: bold; color: #2c3e50;">Atributos Base</label>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 5px; background: #ecf0f1; padding: 8px; border-radius: 6px; margin-bottom: 10px;">
-                        <div style="text-align: center;"><label style="font-size: 9px; font-weight: bold; color: #c0392b;">VITALIDAD</label><input type="number" id="npc-vit" value="1" style="width: 100%; text-align: center; border: 1px solid #ccc; border-radius: 4px; font-size: 12px;"></div>
-                        <div style="text-align: center;"><label style="font-size: 9px; font-weight: bold; color: #2980b9;">VELOCIDAD</label><input type="number" id="npc-spd" value="1" style="width: 100%; text-align: center; border: 1px solid #ccc; border-radius: 4px; font-size: 12px;"></div>
-                        <div style="text-align: center;"><label style="font-size: 9px; font-weight: bold; color: #e67e22;">ATAQUE</label><input type="number" id="npc-atk" value="1" style="width: 100%; text-align: center; border: 1px solid #ccc; border-radius: 4px; font-size: 12px;"></div>
-                        <div style="text-align: center;"><label style="font-size: 9px; font-weight: bold; color: #27ae60;">DEFENSA</label><input type="number" id="npc-def" value="1" style="width: 100%; text-align: center; border: 1px solid #ccc; border-radius: 4px; font-size: 12px;"></div>
-                        <div style="text-align: center;"><label style="font-size: 9px; font-weight: bold; color: #8e44ad;">ATAQ. MÁG</label><input type="number" id="npc-atk-mag" value="1" style="width: 100%; text-align: center; border: 1px solid #ccc; border-radius: 4px; font-size: 12px;"></div>
-                        <div style="text-align: center;"><label style="font-size: 9px; font-weight: bold; color: #8e44ad;">DEF. MÁG</label><input type="number" id="npc-def-mag" value="1" style="width: 100%; text-align: center; border: 1px solid #ccc; border-radius: 4px; font-size: 12px;"></div>
-                        <div style="text-align: center;"><label style="font-size: 9px; font-weight: bold; color: #16a085;">INTELIGEN</label><input type="number" id="npc-int" value="1" style="width: 100%; text-align: center; border: 1px solid #ccc; border-radius: 4px; font-size: 12px;"></div>
-                        <div style="text-align: center;"><label style="font-size: 9px; font-weight: bold; color: #f39c12;">DESTREZA</label><input type="number" id="npc-des" value="1" style="width: 100%; text-align: center; border: 1px solid #ccc; border-radius: 4px; font-size: 12px;"></div>
-                    </div>
+                    <label style="font-size: 11px; font-weight: bold; color: #2c3e50;">Atributos Activos del Mundo</label>
+                    <div id="creador-npc-stats-dinamicos" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(60px, 1fr)); gap: 5px; background: #ecf0f1; padding: 8px; border-radius: 6px; margin-bottom: 10px;">
+                        </div>
 
                     <div style="background: #e8f4f8; padding: 8px; border-radius: 6px; border: 1px dashed #3498db;">
                         <label style="font-size: 11px; font-weight: bold; color: #2980b9;">Slots Equipables / Botín (Loot)</label>
@@ -80,21 +74,20 @@
                             <label><input type="checkbox" id="npc-has-pecho" checked> Pecho</label>
                             <label><input type="checkbox" id="npc-has-mano1" checked> Mano 1</label>
                             <label><input type="checkbox" id="npc-has-mano2" checked> Mano 2</label>
-                            <label style="margin-left: auto;">Espacios Loot: <input type="number" id="npc-mochila-slots" value="2" min="0" max="5" style="width: 40px; text-align: center;"></label>
+                            <label style="margin-left: auto;">Loot: <input type="number" id="npc-mochila-slots" value="2" min="0" max="5" style="width: 40px; text-align: center;"></label>
                         </div>
                     </div>
 
                     <button class="btn btn-green w-100" style="margin-top: 10px;" onclick="guardarEnBestiario()">💾 Guardar Plantilla</button>
                 </div>
 
-                <ul class="inventory-list" id="lista-bestiario-dm" style="max-height: 400px; overflow-y: auto; margin-bottom: 30px;"></ul>
+                <ul class="inventory-list" id="lista-bestiario-dm" style="max-height: 500px; overflow-y: auto; margin-bottom: 30px;"></ul>
             </div>
         </div>
 
         <div id="tab-forja" class="tab-content">
             <div class="panel" style="max-width: 900px; margin: 0 auto;">
                 <h2 style="border-bottom-color: #8e44ad; color: #8e44ad;">⚒️ La Forja de Ítems</h2>
-                
                 <div style="background: #fdfbfd; padding: 20px; border-radius: 8px; border: 1px solid #e8daef; margin-top: 15px;">
                     <input type="hidden" id="item-edit-id" value="">
                     <div style="display: flex; gap: 10px; margin-bottom: 15px;">
@@ -103,30 +96,79 @@
                             <option value="arma">Arma</option><option value="escudo">Escudo</option><option value="armadura">Armadura</option><option value="objeto">Objeto</option>
                         </select>
                     </div>
-                    
                     <div id="contenedor-stats-item" style="margin-bottom: 15px;"></div>
-                    <button class="btn btn-small w-100" style="margin-bottom: 15px; padding: 10px; background: white; color: #3498db; border: 2px dashed #3498db;" onclick="agregarStatItem()">+ Añadir Stat Mágico al Ítem</button>
-                    
+                    <button class="btn btn-small w-100" style="margin-bottom: 15px; padding: 10px; background: white; color: #3498db; border: 2px dashed #3498db;" onclick="agregarStatItem()">+ Añadir Stat Mágico</button>
                     <div style="display: flex; gap: 10px;">
-                        <button class="btn w-100" style="background-color: #8e44ad; padding: 12px; font-size: 16px;" id="btn-forjar" onclick="forjarItem()">🔨 Forjar y Guardar en la Campaña</button>
+                        <button class="btn w-100" style="background-color: #8e44ad; padding: 12px; font-size: 16px;" id="btn-forjar" onclick="forjarItem()">🔨 Forjar</button>
                         <button class="btn btn-red hidden" style="padding: 12px 20px;" id="btn-cancelar-edicion" onclick="cancelarEdicion()">❌</button>
                     </div>
                 </div>
-                
-                <h4 style="margin-top: 30px; font-size: 16px; border-bottom: 2px solid #ecf0f1; padding-bottom: 5px;">Inventario Global de la Campaña:</h4>
+                <h4 style="margin-top: 30px;">Inventario Global:</h4>
                 <ul class="inventory-list" id="lista-items-dm" style="max-height: 400px; overflow-y: auto;"></ul>
             </div>
         </div>
 
         <div id="tab-diario" class="tab-content">
             <div class="panel" style="max-width: 1000px; margin: 0 auto;">
-                <h2 style="border-bottom-color: #f39c12; color: #d35400;">📖 El Diario del Mundo (Lore y Anuncios)</h2>
-                <p style="font-size: 14px; color: #7f8c8d;">Escribe aquí la historia de tu campaña, reglas especiales o anuncios importantes. Tus jugadores leerán esto en su Sala de Espera.</p>
-                
-                <textarea id="dm-lore" placeholder="En el principio, los dioses forjaron la tierra de..." style="width: 100%; height: 500px; padding: 20px; border: 2px solid #ecf0f1; border-radius: 8px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 16px; resize: vertical; margin-top: 10px; background-color: #fafafa; outline: none; transition: 0.3s;"></textarea>
-                
+                <h2 style="border-bottom-color: #f39c12; color: #d35400;">📖 El Diario del Mundo</h2>
+                <textarea id="dm-lore" placeholder="En el principio, los dioses forjaron la tierra de..." style="width: 100%; height: 400px; padding: 20px; border: 2px solid #ecf0f1; border-radius: 8px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 16px; resize: vertical; margin-top: 10px; background-color: #fafafa; outline: none;"></textarea>
                 <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
-                    <button class="btn btn-warning" style="font-size: 18px; padding: 12px 30px;" onclick="guardarLore()">📢 Guardar y Publicar Diario</button>
+                    <button class="btn btn-warning" style="font-size: 18px; padding: 12px 30px;" onclick="guardarLore()">📢 Guardar Diario</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-config" class="tab-content">
+            <div class="panel" style="max-width: 1000px; margin: 0 auto; background-color: #fdfdfd; border: 2px solid #bdc3c7;">
+                <h2 style="border-bottom-color: #34495e; color: #2c3e50;">⚙️ Reglas del Motor (Modo Dios)</h2>
+                <p style="font-size: 13px; color: #7f8c8d;">Personaliza la hoja de personaje y el aspecto de tu campaña.</p>
+
+                <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #ecf0f1; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                    <h3 style="font-size: 15px; color: #2c3e50; border-bottom: 1px solid #eee; padding-bottom: 5px;">🎨 Colores de la Campaña</h3>
+                    <div style="display: flex; gap: 20px; margin-top: 10px;">
+                        <div>
+                            <label style="font-size: 12px; font-weight: bold; display: block; margin-bottom: 5px;">Color Primario</label>
+                            <input type="color" id="conf-color-1" value="#2c3e50" style="width: 100px; height: 40px; cursor: pointer; border: none; padding: 0;">
+                        </div>
+                    </div>
+                </div>
+
+                <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #ecf0f1; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                    <h3 style="font-size: 15px; color: #2c3e50; border-bottom: 1px solid #eee; padding-bottom: 5px;">🎒 Inventario del Jugador</h3>
+                    <div style="display: flex; gap: 15px; margin-top: 10px; align-items: center; font-size: 14px;">
+                        <label><input type="checkbox" id="conf-inv-pecho" checked> Armadura (Pecho)</label>
+                        <label><input type="checkbox" id="conf-inv-mano1" checked> Mano 1</label>
+                        <label><input type="checkbox" id="conf-inv-mano2" checked> Mano 2</label>
+                        <label style="margin-left: 20px;">Slots de Mochila: <input type="number" id="conf-inv-mochila" value="5" min="1" max="10" style="width: 50px; text-align: center; padding: 4px;"></label>
+                    </div>
+                </div>
+
+                <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #ecf0f1; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                    <h3 style="font-size: 15px; color: #2c3e50; border-bottom: 1px solid #eee; padding-bottom: 5px;">📊 Estadísticas (Stats) Activas</h3>
+                    <p style="font-size: 11px; color: #e74c3c;">Nota: La Vitalidad es el núcleo matemático de Vida/Maná, no se puede desactivar.</p>
+                    
+                    <div style="display: flex; flex-wrap: wrap; gap: 15px; margin-top: 10px; font-size: 13px;">
+                        <label><input type="checkbox" class="conf-stat-check" value="velocidad" checked> Velocidad</label>
+                        <label><input type="checkbox" class="conf-stat-check" value="ataque" checked> Ataque Físico</label>
+                        <label><input type="checkbox" class="conf-stat-check" value="defensa" checked> Defensa Física</label>
+                        <label><input type="checkbox" class="conf-stat-check" value="ataque_magico" checked> Ataque Mágico</label>
+                        <label><input type="checkbox" class="conf-stat-check" value="defensa_magica" checked> Defensa Mágica</label>
+                        <label><input type="checkbox" class="conf-stat-check" value="inteligencia" checked> Inteligencia</label>
+                        <label><input type="checkbox" class="conf-stat-check" value="destreza" checked> Destreza</label>
+                    </div>
+
+                    <h4 style="margin-top: 20px; font-size: 13px; color: #8e44ad;">+ Crear Stats Personalizados (Operan bajo las reglas nativas)</h4>
+                    <div style="display: flex; gap: 10px; margin-top: 5px;">
+                        <input type="text" id="nuevo-stat-nombre" placeholder="Nombre (Ej: CARISMA, PERCEPCIÓN)" style="flex-grow: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                        <button class="btn btn-blue" onclick="agregarStatCustom()">Añadir Stat</button>
+                    </div>
+                    <ul id="lista-stats-custom" style="list-style: none; padding: 0; margin-top: 10px; font-size: 13px;"></ul>
+                </div>
+
+                <div style="background: #e8f4f8; padding: 20px; border-radius: 8px; border: 2px dashed #3498db; text-align: center;">
+                    <h3 style="margin-top: 0; color: #2980b9;">📢 Compilar Parche</h3>
+                    <input type="text" id="patch-nombre" placeholder="Nombre de la actualización (Ej: Versión 1.1 - La Era de la Magia)" style="width: 80%; padding: 10px; margin-bottom: 15px; border-radius: 4px; border: 1px solid #bdc3c7;">
+                    <button class="btn w-100" style="background-color: #2c3e50; font-size: 18px; padding: 15px;" onclick="publicarConfiguracionMundo()">🚀 APLICAR REGLAS Y PUBLICAR PARCHE</button>
                 </div>
             </div>
         </div>
@@ -137,29 +179,26 @@
 <script>
     function abrirPestana(evt, tabName) {
         var i, tabcontent, tablinks;
-        
-        // Esconder todas las cajas
         tabcontent = document.getElementsByClassName("tab-content");
         for (i = 0; i < tabcontent.length; i++) {
             tabcontent[i].style.display = "none";
             tabcontent[i].classList.remove("active");
         }
-        
-        // Quitar el color activo de todos los botones
         tablinks = document.getElementsByClassName("tab-btn");
         for (i = 0; i < tablinks.length; i++) {
             tablinks[i].className = tablinks[i].className.replace(" active", "");
         }
-        
-        // Mostrar la caja solicitada y pintar el botón
         document.getElementById(tabName).style.display = "block";
-        
-        // Pequeño timeout para que la animación CSS funcione bien
-        setTimeout(() => {
-            document.getElementById(tabName).classList.add("active");
-        }, 10);
-        
+        setTimeout(() => { document.getElementById(tabName).classList.add("active"); }, 10);
         evt.currentTarget.className += " active";
+    }
+
+    // NUEVO: Matemáticas limpias para monstruos (1 Vit = 5 HP)
+    function calcularVidaNpcPreview() {
+        const vit = parseInt(document.getElementById('npc-vit').value) || 0;
+        const total = Math.max(1, vit * 5); // Sin el +20 base de los jugadores
+        document.getElementById('npc-hp-preview').innerText = total;
+        document.getElementById('npc-mana-preview').innerText = total;
     }
 </script>
 
