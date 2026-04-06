@@ -23,100 +23,145 @@
         </div>
     </div>
 
-    <div class="grid-container">
-        
-        <div class="panel">
-            <h2 style="border-bottom-color: #3498db; color: #2980b9;">🛡️ Aventureros (Jugadores)</h2>
-            <div id="lista-jugadores-dm" class="card-list"></div>
-
-            <h2 style="border-bottom-color: #e74c3c; color: #c0392b; margin-top: 30px;">🩸 Tablero de Combate (NPCs Activos)</h2>
-            <p style="font-size: 12px; color: #7f8c8d;">Los enemigos invocados desde tu bestiario aparecen aquí.</p>
-            <div id="lista-npcs-activos" class="card-list" style="margin-top: 15px;">
-                <p style="text-align: center; color: #7f8c8d;">No hay enemigos en el tablero.</p>
-            </div>
-        </div>
-
-        <div class="panel">
-            <h2 style="border-bottom-color: #27ae60; color: #27ae60;">📖 El Bestiario (Tus Plantillas)</h2>
-            
-            <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 15px;">
-                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                    <input type="text" id="npc-nombre" placeholder="Nombre (Ej: Goblin Saqueador)" style="flex-grow: 1; padding: 6px; border: 1px solid #ccc; border-radius: 4px;">
-                </div>
-                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                    <div style="flex-grow: 1;">
-                        <label style="font-size: 11px; font-weight: bold;">Vida (HP)</label>
-                        <input type="number" id="npc-hp" value="20" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px;">
-                    </div>
-                    <div style="flex-grow: 1;">
-                        <label style="font-size: 11px; font-weight: bold;">Maná</label>
-                        <input type="number" id="npc-mana" value="0" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px;">
-                    </div>
-                </div>
-                
-                <label style="font-size: 11px; font-weight: bold; color: #2c3e50;">Atributos Base</label>
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 5px; background: #ecf0f1; padding: 8px; border-radius: 6px; margin-bottom: 10px;">
-                    <div style="text-align: center;"><label style="font-size: 9px; font-weight: bold; color: #c0392b;">VITALIDAD</label><input type="number" id="npc-vit" value="1" style="width: 100%; text-align: center; border: 1px solid #ccc; border-radius: 4px; font-size: 12px;"></div>
-                    <div style="text-align: center;"><label style="font-size: 9px; font-weight: bold; color: #2980b9;">VELOCIDAD</label><input type="number" id="npc-spd" value="1" style="width: 100%; text-align: center; border: 1px solid #ccc; border-radius: 4px; font-size: 12px;"></div>
-                    <div style="text-align: center;"><label style="font-size: 9px; font-weight: bold; color: #e67e22;">ATAQUE</label><input type="number" id="npc-atk" value="1" style="width: 100%; text-align: center; border: 1px solid #ccc; border-radius: 4px; font-size: 12px;"></div>
-                    <div style="text-align: center;"><label style="font-size: 9px; font-weight: bold; color: #27ae60;">DEFENSA</label><input type="number" id="npc-def" value="1" style="width: 100%; text-align: center; border: 1px solid #ccc; border-radius: 4px; font-size: 12px;"></div>
-                    <div style="text-align: center;"><label style="font-size: 9px; font-weight: bold; color: #8e44ad;">ATAQ. MÁG</label><input type="number" id="npc-atk-mag" value="1" style="width: 100%; text-align: center; border: 1px solid #ccc; border-radius: 4px; font-size: 12px;"></div>
-                    <div style="text-align: center;"><label style="font-size: 9px; font-weight: bold; color: #8e44ad;">DEF. MÁG</label><input type="number" id="npc-def-mag" value="1" style="width: 100%; text-align: center; border: 1px solid #ccc; border-radius: 4px; font-size: 12px;"></div>
-                    <div style="text-align: center;"><label style="font-size: 9px; font-weight: bold; color: #16a085;">INTELIGEN</label><input type="number" id="npc-int" value="1" style="width: 100%; text-align: center; border: 1px solid #ccc; border-radius: 4px; font-size: 12px;"></div>
-                    <div style="text-align: center;"><label style="font-size: 9px; font-weight: bold; color: #f39c12;">DESTREZA</label><input type="number" id="npc-des" value="1" style="width: 100%; text-align: center; border: 1px solid #ccc; border-radius: 4px; font-size: 12px;"></div>
-                </div>
-
-                <div style="background: #e8f4f8; padding: 8px; border-radius: 6px; border: 1px dashed #3498db;">
-                    <label style="font-size: 11px; font-weight: bold; color: #2980b9;">Slots Equipables / Botín (Loot)</label>
-                    <div style="display: flex; gap: 10px; font-size: 11px; margin-top: 5px; align-items: center;">
-                        <label><input type="checkbox" id="npc-has-pecho" checked> Pecho</label>
-                        <label><input type="checkbox" id="npc-has-mano1" checked> Mano 1</label>
-                        <label><input type="checkbox" id="npc-has-mano2" checked> Mano 2</label>
-                        <label style="margin-left: auto;">Espacios Loot: <input type="number" id="npc-mochila-slots" value="2" min="0" max="5" style="width: 40px; text-align: center;"></label>
-                    </div>
-                </div>
-
-                <button class="btn btn-green w-100" style="margin-top: 10px;" onclick="guardarEnBestiario()">💾 Guardar Plantilla</button>
-            </div>
-
-            <ul class="inventory-list" id="lista-bestiario-dm" style="max-height: 200px; overflow-y: auto; margin-bottom: 30px;"></ul>
-
-            <details style="background: #f9f9f9; padding: 10px; border-radius: 8px; border: 1px solid #ddd;">
-                <summary style="font-weight: bold; color: #8e44ad; cursor: pointer; outline: none;">⚒️ Abrir La Forja de Ítems</summary>
-                
-                <div style="margin-top: 15px;">
-                    <input type="hidden" id="item-edit-id" value="">
-                    <input type="text" id="nuevo-item-nombre" placeholder="Nombre del Ítem" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 10px;">
-                    <select id="nuevo-item-tipo" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 10px;">
-                        <option value="arma">Arma</option><option value="escudo">Escudo</option><option value="armadura">Armadura</option><option value="objeto">Objeto</option>
-                    </select>
-                    
-                    <div id="contenedor-stats-item" style="margin-bottom: 10px;"></div>
-                    <button class="btn btn-small btn-blue w-100" style="margin-bottom: 10px;" onclick="agregarStatItem()">+ Añadir Stat al Ítem</button>
-                    
-                    <div style="display: flex; gap: 5px;">
-                        <button class="btn w-100" style="background-color: #8e44ad;" id="btn-forjar" onclick="forjarItem()">🔨 Forjar Ítem</button>
-                        <button class="btn btn-red hidden" id="btn-cancelar-edicion" onclick="cancelarEdicion()">❌</button>
-                    </div>
-                    
-                    <h4 style="margin-top: 15px; font-size: 13px;">Ítems de la Campaña:</h4>
-                    <ul class="inventory-list" id="lista-items-dm" style="max-height: 150px; overflow-y: auto;"></ul>
-                </div>
-            </details>
-
-        </div>
-    </div> <div class="panel" style="margin-top: 20px; max-width: 1100px; margin-left: auto; margin-right: auto; margin-bottom: 40px;">
-        <h2 style="border-bottom-color: #f39c12; color: #d35400;">📖 El Diario del Mundo (Lore y Anuncios)</h2>
-        <p style="font-size: 13px; color: #7f8c8d;">Escribe aquí la historia de tu campaña, reglas especiales o anuncios importantes. Tus jugadores podrán leer esto en su Portal.</p>
-        
-        <textarea id="dm-lore" placeholder="En el principio, los dioses forjaron la tierra de..." style="width: 100%; height: 250px; padding: 15px; border: 2px solid #ecf0f1; border-radius: 8px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 15px; resize: vertical; margin-top: 10px; background-color: #fafafa; outline: none; transition: 0.3s;"></textarea>
-        
-        <div style="display: flex; justify-content: flex-end; margin-top: 15px;">
-            <button class="btn btn-warning" style="font-size: 16px; padding: 10px 20px;" onclick="guardarLore()">📢 Guardar y Publicar Diario</button>
-        </div>
+    <div class="tabs-menu" style="max-width: 1200px; margin-left: auto; margin-right: auto;">
+        <button class="tab-btn active" onclick="abrirPestana(event, 'tab-tablero')">⚔️ Tablero en Vivo</button>
+        <button class="tab-btn" onclick="abrirPestana(event, 'tab-bestiario')">📖 Bestiario</button>
+        <button class="tab-btn" onclick="abrirPestana(event, 'tab-forja')">⚒️ La Forja</button>
+        <button class="tab-btn" onclick="abrirPestana(event, 'tab-diario')">📜 Diario del Mundo</button>
     </div>
 
+    <div class="tabs-container" style="max-width: 1200px; margin: 0 auto; padding-bottom: 40px;">
+        
+        <div id="tab-tablero" class="tab-content active">
+            <div class="grid-container" style="grid-template-columns: 1fr 1.5fr;">
+                <div class="panel">
+                    <h2 style="border-bottom-color: #3498db; color: #2980b9;">🛡️ Aventureros (Jugadores)</h2>
+                    <div id="lista-jugadores-dm" class="card-list" style="max-height: 600px;"></div>
+                </div>
+
+                <div class="panel">
+                    <h2 style="border-bottom-color: #e74c3c; color: #c0392b;">🩸 Tablero de Combate (NPCs Activos)</h2>
+                    <p style="font-size: 12px; color: #7f8c8d;">Los enemigos invocados desde tu bestiario aparecen aquí.</p>
+                    <div id="lista-npcs-activos" class="card-list" style="margin-top: 15px; max-height: 600px;">
+                        <p style="text-align: center; color: #7f8c8d;">No hay enemigos en el tablero.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-bestiario" class="tab-content">
+            <div class="panel" style="max-width: 900px; margin: 0 auto;">
+                <h2 style="border-bottom-color: #27ae60; color: #27ae60;">📖 El Bestiario (Tus Plantillas)</h2>
+                
+                <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 15px;">
+                    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                        <input type="text" id="npc-nombre" placeholder="Nombre (Ej: Goblin Saqueador)" style="flex-grow: 1; padding: 6px; border: 1px solid #ccc; border-radius: 4px;">
+                    </div>
+                    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                        <div style="flex-grow: 1;"><label style="font-size: 11px; font-weight: bold;">Vida (HP)</label><input type="number" id="npc-hp" value="20" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px;"></div>
+                        <div style="flex-grow: 1;"><label style="font-size: 11px; font-weight: bold;">Maná</label><input type="number" id="npc-mana" value="0" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px;"></div>
+                    </div>
+                    
+                    <label style="font-size: 11px; font-weight: bold; color: #2c3e50;">Atributos Base</label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 5px; background: #ecf0f1; padding: 8px; border-radius: 6px; margin-bottom: 10px;">
+                        <div style="text-align: center;"><label style="font-size: 9px; font-weight: bold; color: #c0392b;">VITALIDAD</label><input type="number" id="npc-vit" value="1" style="width: 100%; text-align: center; border: 1px solid #ccc; border-radius: 4px; font-size: 12px;"></div>
+                        <div style="text-align: center;"><label style="font-size: 9px; font-weight: bold; color: #2980b9;">VELOCIDAD</label><input type="number" id="npc-spd" value="1" style="width: 100%; text-align: center; border: 1px solid #ccc; border-radius: 4px; font-size: 12px;"></div>
+                        <div style="text-align: center;"><label style="font-size: 9px; font-weight: bold; color: #e67e22;">ATAQUE</label><input type="number" id="npc-atk" value="1" style="width: 100%; text-align: center; border: 1px solid #ccc; border-radius: 4px; font-size: 12px;"></div>
+                        <div style="text-align: center;"><label style="font-size: 9px; font-weight: bold; color: #27ae60;">DEFENSA</label><input type="number" id="npc-def" value="1" style="width: 100%; text-align: center; border: 1px solid #ccc; border-radius: 4px; font-size: 12px;"></div>
+                        <div style="text-align: center;"><label style="font-size: 9px; font-weight: bold; color: #8e44ad;">ATAQ. MÁG</label><input type="number" id="npc-atk-mag" value="1" style="width: 100%; text-align: center; border: 1px solid #ccc; border-radius: 4px; font-size: 12px;"></div>
+                        <div style="text-align: center;"><label style="font-size: 9px; font-weight: bold; color: #8e44ad;">DEF. MÁG</label><input type="number" id="npc-def-mag" value="1" style="width: 100%; text-align: center; border: 1px solid #ccc; border-radius: 4px; font-size: 12px;"></div>
+                        <div style="text-align: center;"><label style="font-size: 9px; font-weight: bold; color: #16a085;">INTELIGEN</label><input type="number" id="npc-int" value="1" style="width: 100%; text-align: center; border: 1px solid #ccc; border-radius: 4px; font-size: 12px;"></div>
+                        <div style="text-align: center;"><label style="font-size: 9px; font-weight: bold; color: #f39c12;">DESTREZA</label><input type="number" id="npc-des" value="1" style="width: 100%; text-align: center; border: 1px solid #ccc; border-radius: 4px; font-size: 12px;"></div>
+                    </div>
+
+                    <div style="background: #e8f4f8; padding: 8px; border-radius: 6px; border: 1px dashed #3498db;">
+                        <label style="font-size: 11px; font-weight: bold; color: #2980b9;">Slots Equipables / Botín (Loot)</label>
+                        <div style="display: flex; gap: 10px; font-size: 11px; margin-top: 5px; align-items: center;">
+                            <label><input type="checkbox" id="npc-has-pecho" checked> Pecho</label>
+                            <label><input type="checkbox" id="npc-has-mano1" checked> Mano 1</label>
+                            <label><input type="checkbox" id="npc-has-mano2" checked> Mano 2</label>
+                            <label style="margin-left: auto;">Espacios Loot: <input type="number" id="npc-mochila-slots" value="2" min="0" max="5" style="width: 40px; text-align: center;"></label>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-green w-100" style="margin-top: 10px;" onclick="guardarEnBestiario()">💾 Guardar Plantilla</button>
+                </div>
+
+                <ul class="inventory-list" id="lista-bestiario-dm" style="max-height: 400px; overflow-y: auto; margin-bottom: 30px;"></ul>
+            </div>
+        </div>
+
+        <div id="tab-forja" class="tab-content">
+            <div class="panel" style="max-width: 900px; margin: 0 auto;">
+                <h2 style="border-bottom-color: #8e44ad; color: #8e44ad;">⚒️ La Forja de Ítems</h2>
+                
+                <div style="background: #fdfbfd; padding: 20px; border-radius: 8px; border: 1px solid #e8daef; margin-top: 15px;">
+                    <input type="hidden" id="item-edit-id" value="">
+                    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                        <input type="text" id="nuevo-item-nombre" placeholder="Nombre del Ítem Legendario..." style="flex-grow: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                        <select id="nuevo-item-tipo" style="width: 150px; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                            <option value="arma">Arma</option><option value="escudo">Escudo</option><option value="armadura">Armadura</option><option value="objeto">Objeto</option>
+                        </select>
+                    </div>
+                    
+                    <div id="contenedor-stats-item" style="margin-bottom: 15px;"></div>
+                    <button class="btn btn-small w-100" style="margin-bottom: 15px; padding: 10px; background: white; color: #3498db; border: 2px dashed #3498db;" onclick="agregarStatItem()">+ Añadir Stat Mágico al Ítem</button>
+                    
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn w-100" style="background-color: #8e44ad; padding: 12px; font-size: 16px;" id="btn-forjar" onclick="forjarItem()">🔨 Forjar y Guardar en la Campaña</button>
+                        <button class="btn btn-red hidden" style="padding: 12px 20px;" id="btn-cancelar-edicion" onclick="cancelarEdicion()">❌</button>
+                    </div>
+                </div>
+                
+                <h4 style="margin-top: 30px; font-size: 16px; border-bottom: 2px solid #ecf0f1; padding-bottom: 5px;">Inventario Global de la Campaña:</h4>
+                <ul class="inventory-list" id="lista-items-dm" style="max-height: 400px; overflow-y: auto;"></ul>
+            </div>
+        </div>
+
+        <div id="tab-diario" class="tab-content">
+            <div class="panel" style="max-width: 1000px; margin: 0 auto;">
+                <h2 style="border-bottom-color: #f39c12; color: #d35400;">📖 El Diario del Mundo (Lore y Anuncios)</h2>
+                <p style="font-size: 14px; color: #7f8c8d;">Escribe aquí la historia de tu campaña, reglas especiales o anuncios importantes. Tus jugadores leerán esto en su Sala de Espera.</p>
+                
+                <textarea id="dm-lore" placeholder="En el principio, los dioses forjaron la tierra de..." style="width: 100%; height: 500px; padding: 20px; border: 2px solid #ecf0f1; border-radius: 8px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 16px; resize: vertical; margin-top: 10px; background-color: #fafafa; outline: none; transition: 0.3s;"></textarea>
+                
+                <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
+                    <button class="btn btn-warning" style="font-size: 18px; padding: 12px 30px;" onclick="guardarLore()">📢 Guardar y Publicar Diario</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
 </div>
+
+<script>
+    function abrirPestana(evt, tabName) {
+        var i, tabcontent, tablinks;
+        
+        // Esconder todas las cajas
+        tabcontent = document.getElementsByClassName("tab-content");
+        for (i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = "none";
+            tabcontent[i].classList.remove("active");
+        }
+        
+        // Quitar el color activo de todos los botones
+        tablinks = document.getElementsByClassName("tab-btn");
+        for (i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(" active", "");
+        }
+        
+        // Mostrar la caja solicitada y pintar el botón
+        document.getElementById(tabName).style.display = "block";
+        
+        // Pequeño timeout para que la animación CSS funcione bien
+        setTimeout(() => {
+            document.getElementById(tabName).classList.add("active");
+        }, 10);
+        
+        evt.currentTarget.className += " active";
+    }
+</script>
 
 </body>
 </html>

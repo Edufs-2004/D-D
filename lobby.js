@@ -105,6 +105,37 @@ async function renderizarLobby() {
     }
 }
 
+// 🔥 AQUÍ ESTÁN LAS FUNCIONES QUE SE HABÍAN BORRADO 🔥
+function crearNuevoPersonajeLobby() {
+    window.location.href = 'personaje.html';
+}
+
+async function unirseAHistoriaPrompt() {
+    const codigo = prompt("Ingresa el código secreto de la campaña:");
+    if (!codigo || codigo.trim() === "") return;
+
+    const codigoLimpio = codigo.trim().toUpperCase();
+
+    // Buscar en la Nube si existe una historia con ese código
+    const { data: historia, error } = await window.db
+        .from('historias')
+        .select('id, nombre')
+        .eq('codigo_acceso', codigoLimpio)
+        .single();
+
+    if (error || !historia) {
+        alert("❌ No se encontró ninguna campaña con ese código. Verifica si tiene mayúsculas/números e intenta de nuevo.");
+        return;
+    }
+
+    // Si la encontró, confirmamos y lo mandamos a crear la ficha
+    const confirmar = confirm(`¡Campaña encontrada: "${historia.nombre}"! 🐉\n\n¿Quieres crear tu personaje para esta aventura ahora mismo?`);
+    
+    if (confirmar) {
+        window.location.href = `personaje.html?nueva_historia_id=${historia.id}`;
+    }
+}
+
 // =========================================
 // 3. COLUMNA DERECHA: DUNGEON MASTER
 // =========================================
