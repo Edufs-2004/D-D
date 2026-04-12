@@ -72,11 +72,11 @@ function renderizarTabla() {
     tbody.innerHTML = ''; if (!modoJuego) recalcularMultiplicadores();
 
     stats.forEach((stat, index) => {
-        // SI EXISTEN REGLAS DEL MUNDO, OCULTAMOS LOS STATS APAGADOS POR EL DM
+        // Ocultar stats apagados por el DM
         if (reglasMundo && stat.id !== 'vitalidad') {
             const esActivo = reglasMundo.stats_activos.includes(stat.id);
             const esCustom = reglasMundo.stats_custom.find(c => c.id === stat.id);
-            if (!esActivo && !esCustom) return; // Se salta este stat, no lo dibuja
+            if (!esActivo && !esCustom) return; 
         }
 
         const nivel = calcularNivelFinal(stat); let textoNivel = `${nivel.puro}`;
@@ -85,25 +85,53 @@ function renderizarTabla() {
         
         let colInt = '';
         if (stat.id === 'vitalidad') { 
-            colInt = `<td><span class="text-muted">Auto</span></td>`; 
+            colInt = `<td><span class="text-muted">Motor Base</span></td>`; 
         } 
         else if (!modoJuego) { 
+            // Fase de Creación (Botones azules)
             colInt = `<td><div style="display:flex; justify-content:center; align-items:center; gap:8px;"><button class="btn btn-blue btn-small" onclick="modificarPuntoInicial(${index}, -1)">-</button><span style="display:inline-block; width:20px; font-weight:bold; text-align:center;">${stat.ptsIniciales}</span><button class="btn btn-blue btn-small" onclick="modificarPuntoInicial(${index}, 1)" ${puntosInicialesDisp === 0 ? 'disabled' : ''}>+</button></div></td>`; 
         } 
         else { 
-            colInt = `<td><button class="btn btn-green btn-small" onclick="gastarPuntoMejora(${index})" ${puntosMejoraDisp === 0 ? 'disabled' : ''}>+ Mejorar</button><span style="font-size: 12px; color: #7f8c8d; display: block; margin-top: 3px;">Gastados: ${stat.ptsMejora}</span></td>`; 
+            // NUEVO: Fase de Juego (Botones verdes y rojos para Deshacer)
+            colInt = `<td>
+                <div style="display:flex; justify-content:center; align-items:center; gap:5px;">
+                    <button class="btn btn-red btn-small" style="padding:2px 8px;" onclick="restarPuntoMejora(${index})" ${stat.ptsMejora === 0 ? 'disabled' : ''}>-</button>
+                    <span style="display:inline-block; width:20px; text-align:center; font-weight:bold; font-size:14px; color:#2c3e50;">${stat.ptsMejora}</span>
+                    <button class="btn btn-green btn-small" style="padding:2px 8px;" onclick="gastarPuntoMejora(${index})" ${puntosMejoraDisp === 0 ? 'disabled' : ''}>+</button>
+                </div>
+            </td>`; 
         }
         
         tbody.innerHTML += `<tr><td><strong>${stat.nombre}</strong></td><td style="font-size: 18px; font-weight: bold;">${textoNivel}</td>${colInt}<td style="color: #8e44ad; font-weight: bold;">+${stat.mult}</td></tr>`;
     });
 
-    document.getElementById('puntos-iniciales').innerText = puntosInicialesDisp;
-    document.getElementById('btn-comenzar').disabled = puntosInicialesDisp > 0;
-    document.getElementById('nivel-general').innerText = nivelPersonaje;
-    document.getElementById('puntos-mejora').innerText = puntosMejoraDisp;
+    // Actualizar marcadores de pantalla
+    const lblIniciales = document.getElementById('puntos-iniciales'); if(lblIniciales) lblIniciales.innerText = puntosInicialesDisp;
+    const btnComenzar = document.getElementById('btn-comenzar'); if(btnComenzar) btnComenzar.disabled = puntosInicialesDisp > 0;
+    const lblNivel = document.getElementById('nivel-general'); if(lblNivel) lblNivel.innerText = nivelPersonaje;
+    const lblMejora = document.getElementById('puntos-mejora'); if(lblMejora) lblMejora.innerText = puntosMejoraDisp;
 
-    const vNivel = calcularNivelFinal(stats[0]);
-    if (hpMax !== vNivel.total) { const dif = vNivel.total - hpMax; hpMax = vNivel.total; manaMax = vNivel.total; hpActual += dif; manaActual += dif; }
+    // 🔥 SOLUCIÓN AL BUG 50/35 (Lógica estricta de HP Max)
+    let vitStat = stats.find(s => s.id === 'vitalidad') || stats[0];
+    const vNivel = calcularNivelFinal(vitStat);
+    
+    // Solo si el HP máximo realmente cambió
+    if (hpMax !== vNivel.total) { 
+        // Si subió de nivel y ya habíamos cargado (hpMax > 20)
+        if (hpMax > 0 && hpMax !== 20 && vNivel.total > hpMax) {
+            const dif = vNivel.total - hpMax; 
+            hpActual += dif; 
+            manaActual += dif; 
+        } 
+        // Si bajó de nivel (Deshacer)
+        else if (vNivel.total < hpMax) {
+            if (hpActual > vNivel.total) hpActual = vNivel.total;
+            if (manaActual > vNivel.total) manaActual = vNivel.total;
+        }
+        hpMax = vNivel.total; 
+        manaMax = vNivel.total; 
+    }
+    
     actualizarVisualesBarras();
 }
 
@@ -197,8 +225,40 @@ function calcularNivelFinal(stat) { let nivelBase = stat.id === 'vitalidad' ? st
 function recalcularMultiplicadores() { stats.forEach(stat => { if (stat.id !== 'vitalidad') { let n = stat.base + stat.ptsIniciales; stat.mult = n <= 2 ? 1 : n === 3 ? 2 : n <= 5 ? 3 : 4; } }); }
 function modificarPuntoInicial(i, v) { if (v === -1 && stats[i].ptsIniciales > 0) { stats[i].ptsIniciales -= 1; puntosInicialesDisp += 1; } else if (v === 1 && puntosInicialesDisp > 0) { stats[i].ptsIniciales += 1; puntosInicialesDisp -= 1; } renderizarTabla(); }
 function iniciarPartida() { modoJuego = true; document.getElementById('fase-creacion').classList.add('hidden'); document.getElementById('fase-juego').classList.remove('hidden'); document.getElementById('col-asignar').classList.add('hidden'); document.getElementById('col-mejora').classList.remove('hidden'); const vNivel = calcularNivelFinal(stats[0]); hpMax = vNivel.total; manaMax = vNivel.total; hpActual = hpMax; manaActual = manaMax; renderizarTabla(); }
-function subirNivelGeneral() { nivelPersonaje++; puntosMejoraDisp++; renderizarTabla(); }
-function gastarPuntoMejora(i) { if (puntosMejoraDisp > 0 && stats[i].id !== 'vitalidad') { stats[i].ptsMejora++; puntosMejoraDisp--; renderizarTabla(); } }
+// =========================================
+// SISTEMA DE NIVEL Y DESHACER (UNDO)
+// =========================================
+function subirNivelGeneral() { 
+    nivelPersonaje++; 
+    puntosMejoraDisp++; 
+    renderizarTabla(); 
+}
+
+function bajarNivelGeneral() { 
+    if (nivelPersonaje > 1) {
+        nivelPersonaje--; 
+        puntosMejoraDisp--; 
+        // Si al bajar el nivel, los puntos quedan en negativo, significa que ya los gastó.
+        // El jugador tendrá que presionar el botón "-" en algún stat para equilibrarlo.
+        renderizarTabla(); 
+    }
+}
+
+function gastarPuntoMejora(i) { 
+    if (puntosMejoraDisp > 0 && stats[i].id !== 'vitalidad') { 
+        stats[i].ptsMejora++; 
+        puntosMejoraDisp--; 
+        renderizarTabla(); 
+    } 
+}
+
+function restarPuntoMejora(i) {
+    if (stats[i].ptsMejora > 0 && stats[i].id !== 'vitalidad') {
+        stats[i].ptsMejora--;
+        puntosMejoraDisp++;
+        renderizarTabla();
+    }
+}
 function desequipar(idEquipado) { const inputEq = document.getElementById(idEquipado); if (!inputEq || !inputEq.value) return; let slotVacio = null; for (let i = 1; i <= 10; i++) { const invInput = document.getElementById(`inv-${i}`); if (invInput && !invInput.value && invInput.parentElement.parentElement.style.display !== 'none') { slotVacio = invInput; break; } } if (!slotVacio) { alert("No hay espacio en la mochila."); return; } slotVacio.value = inputEq.value; slotVacio.dataset.itemId = inputEq.dataset.itemId || ""; inputEq.value = ""; inputEq.dataset.itemId = ""; actualizarEquipamiento(); }
 function intercambiar(slotNum) { const invInput = document.getElementById(`inv-${slotNum}`); const targetInput = document.getElementById(document.getElementById(`target-${slotNum}`).value); if (!invInput || !targetInput) return; if (!invInput.value && !targetInput.value) return; const tempValorDestino = targetInput.value; const tempIdDestino = targetInput.dataset.itemId || ""; targetInput.value = invInput.value; targetInput.dataset.itemId = invInput.dataset.itemId || ""; invInput.value = tempValorDestino; invInput.dataset.itemId = tempIdDestino; actualizarEquipamiento(); }
 function modificarBarra(tipo, mult) { const inputElem = document.getElementById(`${tipo}-input`); const valor = parseInt(inputElem.value) || 0; if(valor === 0) return; if (tipo === 'hp') { hpActual += (valor * mult); if (hpActual < 0) hpActual = 0; if (hpActual > hpMax) hpActual = hpMax; } else if (tipo === 'mana') { manaActual += (valor * mult); if (manaActual < 0) manaActual = 0; if (manaActual > manaMax) manaActual = manaMax; } inputElem.value = 1; actualizarVisualesBarras(); if(hpActual === 0) setTimeout(() => alert("¡PUNTOS DE VIDA A 0! Tira los dados físicos."), 600); }

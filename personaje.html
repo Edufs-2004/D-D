@@ -53,10 +53,13 @@
             </div>
 
             <div class="controls-box hidden" id="fase-juego">
-                <div class="level-badge">Nivel General: <span id="nivel-general">1</span></div>
+                <div style="display: flex; gap: 10px; align-items: center; justify-content: center; margin-bottom: 10px;">
+                    <button class="btn btn-red btn-small" onclick="bajarNivelGeneral()">⬇ Bajar Nivel</button>
+                    <div class="level-badge" style="margin: 0;">Nivel General: <span id="nivel-general">1</span></div>
+                    <button class="btn btn-blue btn-small" onclick="subirNivelGeneral()">⬆ Subir Nivel</button>
+                </div>
                 <div>
-                    <span style="font-weight: bold; margin-right: 15px;">Puntos de Mejora: <span id="puntos-mejora" class="text-green">0</span></span>
-                    <button class="btn btn-green" onclick="subirNivelGeneral()">+ Subir Nivel</button>
+                    <span style="font-weight: bold;">Puntos de Mejora: <span id="puntos-mejora" class="text-green">0</span></span>
                 </div>
             </div>
 
@@ -103,31 +106,34 @@
             <h3>Equipamiento</h3>
             
             <div class="columna-inventario">
-            
-            <div class="inventory-section">
-                <h4 style="margin: 0 0 5px 0; font-size: 14px;">Equipamiento Activo</h4>
-                <ul class="inventory-list">
-                    <li id="row-eq-armadura"><label>Pecho</label><div class="autocomplete-wrapper"><input type="text" id="eq-armadura" autocomplete="off"></div><button class="btn btn-icon btn-red" onclick="desequipar('eq-armadura')">⬇</button></li>
-                    <li id="row-eq-mano1"><label>Mano 1</label><div class="autocomplete-wrapper"><input type="text" id="eq-mano1" autocomplete="off"></div><button class="btn btn-icon btn-red" onclick="desequipar('eq-mano1')">⬇</button></li>
-                    <li id="row-eq-mano2"><label>Mano 2</label><div class="autocomplete-wrapper"><input type="text" id="eq-mano2" autocomplete="off"></div><button class="btn btn-icon btn-red" onclick="desequipar('eq-mano2')">⬇</button></li>
-                </ul>
-            </div>
+                <div class="inventory-section">
+                    <h4 style="margin: 0 0 5px 0; font-size: 14px;">Equipamiento Activo</h4>
+                    <ul class="inventory-list">
+                        <li id="row-eq-armadura"><label>Pecho</label><div class="autocomplete-wrapper"><input type="text" id="eq-armadura" autocomplete="off"></div><button class="btn btn-icon btn-red" onclick="desequipar('eq-armadura')">⬇</button></li>
+                        <li id="row-eq-mano1"><label>Mano 1</label><div class="autocomplete-wrapper"><input type="text" id="eq-mano1" autocomplete="off"></div><button class="btn btn-icon btn-red" onclick="desequipar('eq-mano1')">⬇</button></li>
+                        <li id="row-eq-mano2"><label>Mano 2</label><div class="autocomplete-wrapper"><input type="text" id="eq-mano2" autocomplete="off"></div><button class="btn btn-icon btn-red" onclick="desequipar('eq-mano2')">⬇</button></li>
+                    </ul>
+                </div>
 
-            <div class="inventory-section">
-                <h4 style="margin: 0 0 5px 0; font-size: 14px;">Mochila (Botín)</h4>
-                <ul class="inventory-list" id="lista-mochila-jugador">
-                    <li id="row-inv-1"><label>Slot 1</label><div class="autocomplete-wrapper"><input type="text" id="inv-1" autocomplete="off"></div><select id="target-1" class="swap-select"><option value="eq-mano1">Mano 1</option><option value="eq-mano2">Mano 2</option><option value="eq-armadura">Pecho</option></select><button class="btn btn-icon btn-green" onclick="intercambiar(1)">🔄</button></li>
-                    <li id="row-inv-2"><label>Slot 2</label><div class="autocomplete-wrapper"><input type="text" id="inv-2" autocomplete="off"></div><select id="target-2" class="swap-select"><option value="eq-mano1">Mano 1</option><option value="eq-mano2">Mano 2</option><option value="eq-armadura">Pecho</option></select><button class="btn btn-icon btn-green" onclick="intercambiar(2)">🔄</button></li>
-                    <li id="row-inv-3"><label>Slot 3</label><div class="autocomplete-wrapper"><input type="text" id="inv-3" autocomplete="off"></div><select id="target-3" class="swap-select"><option value="eq-mano1">Mano 1</option><option value="eq-mano2">Mano 2</option><option value="eq-armadura">Pecho</option></select><button class="btn btn-icon btn-green" onclick="intercambiar(3)">🔄</button></li>
-                    <li id="row-inv-4"><label>Slot 4</label><div class="autocomplete-wrapper"><input type="text" id="inv-4" autocomplete="off"></div><select id="target-4" class="swap-select"><option value="eq-mano1">Mano 1</option><option value="eq-mano2">Mano 2</option><option value="eq-armadura">Pecho</option></select><button class="btn btn-icon btn-green" onclick="intercambiar(4)">🔄</button></li>
-                    <li id="row-inv-5"><label>Slot 5</label><div class="autocomplete-wrapper"><input type="text" id="inv-5" autocomplete="off"></div><select id="target-5" class="swap-select"><option value="eq-mano1">Mano 1</option><option value="eq-mano2">Mano 2</option><option value="eq-armadura">Pecho</option></select><button class="btn btn-icon btn-green" onclick="intercambiar(5)">🔄</button></li>
-                    <li id="row-inv-6"><label>Slot 6</label><div class="autocomplete-wrapper"><input type="text" id="inv-6" autocomplete="off"></div><select id="target-6" class="swap-select"><option value="eq-mano1">Mano 1</option><option value="eq-mano2">Mano 2</option><option value="eq-armadura">Pecho</option></select><button class="btn btn-icon btn-green" onclick="intercambiar(6)">🔄</button></li>
-                    <li id="row-inv-7"><label>Slot 7</label><div class="autocomplete-wrapper"><input type="text" id="inv-7" autocomplete="off"></div><select id="target-7" class="swap-select"><option value="eq-mano1">Mano 1</option><option value="eq-mano2">Mano 2</option><option value="eq-armadura">Pecho</option></select><button class="btn btn-icon btn-green" onclick="intercambiar(7)">🔄</button></li>
-                    <li id="row-inv-8"><label>Slot 8</label><div class="autocomplete-wrapper"><input type="text" id="inv-8" autocomplete="off"></div><select id="target-8" class="swap-select"><option value="eq-mano1">Mano 1</option><option value="eq-mano2">Mano 2</option><option value="eq-armadura">Pecho</option></select><button class="btn btn-icon btn-green" onclick="intercambiar(8)">🔄</button></li>
-                    <li id="row-inv-9"><label>Slot 9</label><div class="autocomplete-wrapper"><input type="text" id="inv-9" autocomplete="off"></div><select id="target-9" class="swap-select"><option value="eq-mano1">Mano 1</option><option value="eq-mano2">Mano 2</option><option value="eq-armadura">Pecho</option></select><button class="btn btn-icon btn-green" onclick="intercambiar(9)">🔄</button></li>
-                    <li id="row-inv-10"><label>Slot 10</label><div class="autocomplete-wrapper"><input type="text" id="inv-10" autocomplete="off"></div><select id="target-10" class="swap-select"><option value="eq-mano1">Mano 1</option><option value="eq-mano2">Mano 2</option><option value="eq-armadura">Pecho</option></select><button class="btn btn-icon btn-green" onclick="intercambiar(10)">🔄</button></li>
-                </ul>
+                <div class="inventory-section">
+                    <h4 style="margin: 0 0 5px 0; font-size: 14px;">Mochila (Botín)</h4>
+                    <ul class="inventory-list" id="lista-mochila-jugador">
+                        <li id="row-inv-1"><label>Slot 1</label><div class="autocomplete-wrapper"><input type="text" id="inv-1" autocomplete="off"></div><select id="target-1" class="swap-select"><option value="eq-mano1">Mano 1</option><option value="eq-mano2">Mano 2</option><option value="eq-armadura">Pecho</option></select><button class="btn btn-icon btn-green" onclick="intercambiar(1)">🔄</button></li>
+                        <li id="row-inv-2"><label>Slot 2</label><div class="autocomplete-wrapper"><input type="text" id="inv-2" autocomplete="off"></div><select id="target-2" class="swap-select"><option value="eq-mano1">Mano 1</option><option value="eq-mano2">Mano 2</option><option value="eq-armadura">Pecho</option></select><button class="btn btn-icon btn-green" onclick="intercambiar(2)">🔄</button></li>
+                        <li id="row-inv-3"><label>Slot 3</label><div class="autocomplete-wrapper"><input type="text" id="inv-3" autocomplete="off"></div><select id="target-3" class="swap-select"><option value="eq-mano1">Mano 1</option><option value="eq-mano2">Mano 2</option><option value="eq-armadura">Pecho</option></select><button class="btn btn-icon btn-green" onclick="intercambiar(3)">🔄</button></li>
+                        <li id="row-inv-4"><label>Slot 4</label><div class="autocomplete-wrapper"><input type="text" id="inv-4" autocomplete="off"></div><select id="target-4" class="swap-select"><option value="eq-mano1">Mano 1</option><option value="eq-mano2">Mano 2</option><option value="eq-armadura">Pecho</option></select><button class="btn btn-icon btn-green" onclick="intercambiar(4)">🔄</button></li>
+                        <li id="row-inv-5"><label>Slot 5</label><div class="autocomplete-wrapper"><input type="text" id="inv-5" autocomplete="off"></div><select id="target-5" class="swap-select"><option value="eq-mano1">Mano 1</option><option value="eq-mano2">Mano 2</option><option value="eq-armadura">Pecho</option></select><button class="btn btn-icon btn-green" onclick="intercambiar(5)">🔄</button></li>
+                        <li id="row-inv-6"><label>Slot 6</label><div class="autocomplete-wrapper"><input type="text" id="inv-6" autocomplete="off"></div><select id="target-6" class="swap-select"><option value="eq-mano1">Mano 1</option><option value="eq-mano2">Mano 2</option><option value="eq-armadura">Pecho</option></select><button class="btn btn-icon btn-green" onclick="intercambiar(6)">🔄</button></li>
+                        <li id="row-inv-7"><label>Slot 7</label><div class="autocomplete-wrapper"><input type="text" id="inv-7" autocomplete="off"></div><select id="target-7" class="swap-select"><option value="eq-mano1">Mano 1</option><option value="eq-mano2">Mano 2</option><option value="eq-armadura">Pecho</option></select><button class="btn btn-icon btn-green" onclick="intercambiar(7)">🔄</button></li>
+                        <li id="row-inv-8"><label>Slot 8</label><div class="autocomplete-wrapper"><input type="text" id="inv-8" autocomplete="off"></div><select id="target-8" class="swap-select"><option value="eq-mano1">Mano 1</option><option value="eq-mano2">Mano 2</option><option value="eq-armadura">Pecho</option></select><button class="btn btn-icon btn-green" onclick="intercambiar(8)">🔄</button></li>
+                        <li id="row-inv-9"><label>Slot 9</label><div class="autocomplete-wrapper"><input type="text" id="inv-9" autocomplete="off"></div><select id="target-9" class="swap-select"><option value="eq-mano1">Mano 1</option><option value="eq-mano2">Mano 2</option><option value="eq-armadura">Pecho</option></select><button class="btn btn-icon btn-green" onclick="intercambiar(9)">🔄</button></li>
+                        <li id="row-inv-10"><label>Slot 10</label><div class="autocomplete-wrapper"><input type="text" id="inv-10" autocomplete="off"></div><select id="target-10" class="swap-select"><option value="eq-mano1">Mano 1</option><option value="eq-mano2">Mano 2</option><option value="eq-armadura">Pecho</option></select><button class="btn btn-icon btn-green" onclick="intercambiar(10)">🔄</button></li>
+                    </ul>
+                </div>
             </div>
+        </div>
+    </div>
+</div>
 
 </body>
 </html>
